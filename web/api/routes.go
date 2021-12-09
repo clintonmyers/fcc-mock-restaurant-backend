@@ -37,7 +37,17 @@ var testimonials = []models.Testimonial{
 	},
 }
 
+var Configuration *models.Configuration
+
 func GetRoutes(app *fiber.App) {
+	Configuration.DB.AutoMigrate(&models.Testimonial{})
+
+	if !Configuration.Production {
+		for _, t := range testimonials {
+			Configuration.DB.Create(&t)
+		}
+
+	}
 
 	app.Get("/:name", func(c *fiber.Ctx) error {
 		msg := fmt.Sprintf("Hello, %s 👋!", c.Params("name"))
@@ -47,7 +57,12 @@ func GetRoutes(app *fiber.App) {
 	g := app.Group("api")
 
 	g.Get("testimonials", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).JSON(testimonials)
+		var ts []models.Testimonial
+		result := Configuration.DB.Find(&ts)
+		fmt.Printf("Num: %d\n", result.RowsAffected)
+		fmt.Printf("error: %#v\n", result.Error)
+
+		return c.Status(fiber.StatusOK).JSON(ts)
 	})
 
 }
