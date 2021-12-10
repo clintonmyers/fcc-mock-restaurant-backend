@@ -30,8 +30,10 @@ func main() {
 
 	flag.Parse()
 
-	if port == "" {
-		port = os.Getenv("PORT")
+	envPort := os.Getenv("PORT")
+
+	if envPort != "" {
+		port = envPort
 	}
 	if !strings.HasPrefix(port, ":") {
 		port = ":" + port
