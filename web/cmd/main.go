@@ -59,23 +59,26 @@ func loadConfiguration(config *models.Configuration) {
 		flag.StringVar(&config.DatabaseUrl, "databaseUrl", "DEFAULT", "Database URL")
 	}
 
+	if config.GenerateTestData = strings.ToLower(os.Getenv("GENERATE_TEST_DATA")) == "true"; config.GenerateTestData == false {
+		flag.BoolVar(&config.GenerateTestData, "generateTestData", true, "Generate test data")
+	}
+
 	flag.Parse()
 
 	if !strings.HasPrefix(config.Port, ":") {
 		config.Port = ":" + config.Port
 	}
-	fmt.Printf("ENV production: %s\n", os.Getenv("production"))
 
 	// Setup DB connection
 	if config.Production {
-		log.Println("Connecting to production database")
+		fmt.Println("Connecting to production database")
 		db, err := gorm.Open(postgres.Open(config.DatabaseUrl), &gorm.Config{})
 		if err != nil {
 			panic("failed to connect database")
 		}
 		config.DB = db
 	} else {
-		log.Println("Connecting to non-production database")
+		fmt.Println("Connecting to non-production database")
 		db, err := gorm.Open(sqlite.Open(config.LocalDB), &gorm.Config{})
 		if err != nil {
 			panic("failed to connect database")
@@ -83,9 +86,11 @@ func loadConfiguration(config *models.Configuration) {
 		config.DB = db
 	}
 
-	//if !config.Production{
-	//	fmt.Printf("ENV full configuration: %#v\n", config)
-	//}
+	fmt.Printf("ENV production: %s\n", os.Getenv("production"))
+
+	if !config.Production {
+		fmt.Printf("ENV full configuration: %#v\n", config)
+	}
 
 }
 
