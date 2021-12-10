@@ -21,20 +21,25 @@ var port string
 var localDB string
 
 func main() {
+	port = os.Getenv("PORT")
+	production = strings.ToLower(os.Getenv("production")) == "true"
+
+	fmt.Printf("ENV production: %s\n", os.Getenv("production"))
+
 	flag.IntVar(&maxIdle, "maxIdle", 5, "Set max idle connections for database")
 	flag.IntVar(&maxOpenConn, "maxOpenConn", 10, "Set max open connections for database")
 	flag.IntVar(&lifetimeMinutes, "lifetimeMinutes", 30, "Set connection max lifetime")
-	flag.BoolVar(&production, "production", false, "Is this a production run?")
-	flag.StringVar(&port, "port", ":3000", "Port to use")
 	flag.StringVar(&localDB, "localDB", "test.db", "Local database file used only during non-production")
 
+	if production == false {
+		flag.BoolVar(&production, "production", false, "Is this a production run?")
+	}
+
+	if port == "" {
+		flag.StringVar(&port, "port", ":3000", "Port to use")
+	}
 	flag.Parse()
 
-	envPort := os.Getenv("PORT")
-
-	if envPort != "" {
-		port = envPort
-	}
 	if !strings.HasPrefix(port, ":") {
 		port = ":" + port
 	}

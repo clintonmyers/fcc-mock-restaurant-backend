@@ -1,8 +1,13 @@
 module github.com/clintonmyers/fcc-mock-restaurant-backend
+
 // +heroku goVersion go1.17
 go 1.17
 
-require github.com/gofiber/fiber/v2 v2.23.0
+require (
+	github.com/gofiber/fiber/v2 v2.23.0
+	gorm.io/driver/sqlite v1.2.6
+	gorm.io/gorm v1.22.4
+)
 
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
@@ -14,6 +19,4 @@ require (
 	github.com/valyala/fasthttp v1.31.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
-	gorm.io/driver/sqlite v1.2.6 // indirect
-	gorm.io/gorm v1.22.4 // indirect
 )
