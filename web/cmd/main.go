@@ -6,6 +6,7 @@ import (
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/web/api"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"log"
@@ -52,6 +53,11 @@ func loadConfiguration(config *models.Configuration) {
 	if config.LocalDB = os.Getenv("localDB"); config.LocalDB == "" {
 		flag.StringVar(&config.LocalDB, "localDB", "test.db", "Local database file used only during non-production")
 	}
+	// DatabaseUrl
+	if config.DatabaseUrl = os.Getenv("DATABASE_URL"); config.DatabaseUrl == "" {
+		fmt.Println("DB URL: ", os.Getenv("DATABASE_URL"))
+		flag.StringVar(&config.DatabaseUrl, "databaseUrl", "DEFAULT", "Database URL")
+	}
 
 	flag.Parse()
 
@@ -62,22 +68,14 @@ func loadConfiguration(config *models.Configuration) {
 
 	// Setup DB connection
 	if config.Production {
-		fmt.Println("WARNING")
-		fmt.Println("WARNING")
-		fmt.Println("WARNING")
-		fmt.Println("WARNING")
-		fmt.Println("Using production setting without it being setup. Defaulting to non-prod setup")
-		fmt.Println("WARNING")
-		fmt.Println("WARNING")
-		fmt.Println("WARNING")
-		fmt.Println("WARNING")
-
-		db, err := gorm.Open(sqlite.Open(config.LocalDB), &gorm.Config{})
+		log.Println("Connecting to production database")
+		db, err := gorm.Open(postgres.Open(config.DatabaseUrl), &gorm.Config{})
 		if err != nil {
 			panic("failed to connect database")
 		}
 		config.DB = db
 	} else {
+		log.Println("Connecting to non-production database")
 		db, err := gorm.Open(sqlite.Open(config.LocalDB), &gorm.Config{})
 		if err != nil {
 			panic("failed to connect database")
@@ -85,7 +83,9 @@ func loadConfiguration(config *models.Configuration) {
 		config.DB = db
 	}
 
-	fmt.Printf("ENV full configuration: %#v\n", config)
+	//if !config.Production{
+	//	fmt.Printf("ENV full configuration: %#v\n", config)
+	//}
 
 }
 

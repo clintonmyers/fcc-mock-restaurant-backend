@@ -43,7 +43,7 @@ func GetRoutes(app *fiber.App) {
 	fmt.Println("HERE")
 	Configuration.DB.AutoMigrate(&models.Testimonial{})
 
-	if !Configuration.Production {
+	if Configuration.Production {
 		for _, t := range testimonials {
 			Configuration.DB.Create(&t)
 		}

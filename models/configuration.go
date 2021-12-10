@@ -10,4 +10,5 @@ type Configuration struct {
 	Production      bool
 	Port            string
 	LocalDB         string
+	DatabaseUrl     string
 }
