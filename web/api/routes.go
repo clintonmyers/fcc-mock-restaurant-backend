@@ -40,6 +40,7 @@ var testimonials = []models.Testimonial{
 var Configuration *models.Configuration
 
 func GetRoutes(app *fiber.App) {
+	fmt.Println("HERE")
 	Configuration.DB.AutoMigrate(&models.Testimonial{})
 
 	if !Configuration.Production {

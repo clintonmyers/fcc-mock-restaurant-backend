@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
@@ -20,7 +21,7 @@ func configureMiddleware(app *fiber.App) {
 
 }
 
-func configureDatabase(db *gorm.DB) {
+func configureDatabase(db *gorm.DB, config *models.Configuration) {
 	// Gets the underlying DB connection
 	sqlDb, err := db.DB()
 
@@ -29,7 +30,7 @@ func configureDatabase(db *gorm.DB) {
 	}
 
 	// configure the connection limits
-	sqlDb.SetMaxIdleConns(maxIdle)
-	sqlDb.SetMaxOpenConns(maxOpenConn)
-	sqlDb.SetConnMaxLifetime(time.Minute * time.Duration(lifetimeMinutes))
+	sqlDb.SetMaxIdleConns(config.MaxIdle)
+	sqlDb.SetMaxOpenConns(config.MaxOpenConn)
+	sqlDb.SetConnMaxLifetime(time.Minute * time.Duration(config.LifetimeMinutes))
 }

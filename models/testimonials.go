@@ -1,7 +1,10 @@
 package models
 
+import "gorm.io/gorm"
+
 type Testimonial struct {
-	ID      int32  `json:"id"`
+	gorm.Model
+	//ID      int32  `json:"id"`
 	Title   string `json:"title"`
 	Comment string `json:"comment"`
 	Rating  Rating `json:"rating"`
