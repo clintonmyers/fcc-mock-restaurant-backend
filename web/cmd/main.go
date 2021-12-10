@@ -9,6 +9,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -29,6 +30,9 @@ func main() {
 
 	flag.Parse()
 
+	if port == "" {
+		port = os.Getenv("PORT")
+	}
 	if !strings.HasPrefix(port, ":") {
 		port = ":" + port
 	}
