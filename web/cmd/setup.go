@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
+	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
@@ -21,7 +21,7 @@ func configureMiddleware(app *fiber.App) {
 
 }
 
-func configureDatabase(db *gorm.DB, config *models.Configuration) {
+func configureDatabase(db *gorm.DB, config *app.Configuration) {
 	// Gets the underlying DB connection
 	sqlDb, err := db.DB()
 

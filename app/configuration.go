@@ -1,9 +1,13 @@
-package models
+package app
 
-import "gorm.io/gorm"
+import (
+	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
+)
 
 type Configuration struct {
 	DB               *gorm.DB
+	WebApp           *fiber.App
 	MaxIdle          int
 	MaxOpenConn      int
 	LifetimeMinutes  int

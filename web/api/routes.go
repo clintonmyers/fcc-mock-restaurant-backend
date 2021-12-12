@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"github.com/gofiber/fiber/v2"
 )
@@ -37,7 +38,7 @@ var testimonials = []models.Testimonial{
 	},
 }
 
-var Configuration *models.Configuration
+var Configuration *app.Configuration
 
 func GetRoutes(app *fiber.App) {
 	fmt.Println("HERE")
