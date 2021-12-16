@@ -5,8 +5,6 @@ import (
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/web/api"
-	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 	"log"
 )
 
@@ -14,43 +12,64 @@ var globalConfig app.Configuration
 
 func main() {
 
-	//globalConfig := models.Configuration{}
 	loadConfiguration(&globalConfig)
 
-	//globalConfig.DB = db
+	setDatabaseParameters(&globalConfig)
+	configureMiddleware(globalConfig.WebApp)
+	api.GetRoutes(globalConfig.WebApp, &globalConfig)
 
-	configureDatabase(&globalConfig)
+	err := migrateDb(&globalConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	testing(globalConfig.DB)
-	api.Configuration = &globalConfig
-	app := globalConfig.WebApp
-	//app := fiber.New()
-	configureMiddleware(app)
-	api.GetRoutes(app)
-	testingGorm(&globalConfig)
+	if globalConfig.Production == false {
+		// Will generate configuration data
+		fmt.Println("Running testingGorm()")
+		testingGorm(&globalConfig)
+	}
 
-	log.Fatal(app.Listen(globalConfig.Port))
+	log.Fatal(globalConfig.WebApp.Listen(globalConfig.Port))
+
 }
+func migrateDb(c *app.Configuration) error {
+	if c.AutoMigrate == false {
+		fmt.Println("Not running auto migration")
+		return nil
+	}
+	fmt.Println("Running auto migration")
 
-type Product struct {
-	gorm.Model
-	Code  string
-	Price uint
-}
-
-func testingGorm(c *app.Configuration) {
+	var err error
 	db := c.DB
 
-	db.AutoMigrate(&models.User{})
-	db.AutoMigrate(&models.Restaurant{})
-	db.AutoMigrate(&models.MenuItem{})
-	db.AutoMigrate(&models.Review{
-		Model:      gorm.Model{},
-		Restaurant: nil,
-		Header:     "",
-		Body:       "",
-		Images:     make([]string, 0),
-	})
+	err = db.AutoMigrate(&models.Address{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&models.Company{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&models.MenuItem{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&models.Restaurant{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&models.Review{})
+	if err != nil {
+		return err
+	}
+	err = db.AutoMigrate(&models.User{})
+
+	return err
+}
+
+// testing
+func testingGorm(c *app.Configuration) {
+	db := c.DB
 
 	r := models.Restaurant{
 		Address: models.Address{
@@ -98,16 +117,21 @@ func testingGorm(c *app.Configuration) {
 		Restaurant:  make([]*models.Restaurant, 0, 10),
 	}
 	menuItem.Restaurant = append(menuItem.Restaurant, &r)
-
+	test := make([]string, 0)
+	test = append(test, "A")
+	test = append(test, "b")
 	review := models.Review{
 		Restaurant: &r,
 		Header:     "Review Header #1",
 		Body:       "This is the main content of the review. It's got a lot of text inside of it",
-		Images:     make([]string, 0, 1),
+		Images:     "",
 	}
-
-	review.Images = append(review.Images, "LINK_TO_REVIEW_IMAGE")
-
+	review.AppendString("LINK_TO_REVIEW_IMAGE")
+	fmt.Println("review.GetStringArr(): ", review.GetStringArr())
+	review.AppendString("LINK_TO_REVIEW_IMAGE2")
+	//review.Images = append(review.Images, "LINK_TO_REVIEW_IMAGE")
+	//review.Images = append(review.Images, "LINK_TO_REVIEW_IMAGE2")
+	fmt.Printf("The Review: %v\n", review)
 	// User test
 	rowsAffected := db.Save(&u).RowsAffected
 	fmt.Println("Table users rows affected: ", rowsAffected)
@@ -121,54 +145,16 @@ func testingGorm(c *app.Configuration) {
 	fmt.Println("Table MenuItem rows affected: ", rowsAffected)
 
 	// Reviews
-	rowsAffected = db.Save(&review).RowsAffected
+	db.Save(&review)
 	fmt.Println("Table Review rows affected: ", rowsAffected)
 
-	app := c.WebApp
-	app.Get("/", func(c *fiber.Ctx) error {
-		//var user models.User
-		//db.First(&user)
-		////db.Find(&user, )
+	//app := c.WebApp
+	//app.Get("/", func(c *fiber.Ctx) error {
+	//
+	//	var rr models.Restaurant
+	//	db.Preload("Users").First(&rr)
+	//
+	//	return c.Status(fiber.StatusOK).JSON(&rr)
+	//})
 
-		//var rr models.Restaurant
-		//db.First(&rr)
-		//db.Find()
-		//var restaurant models.Restaurant
-		//db.Find(&restaurant)
-
-		var rr models.Restaurant
-		//db.First(&rr)
-		//db.Model(&rr).Preload("Users")
-		db.Preload("Users").First(&rr)
-		//db.Where("users in ?", []uint{1}).First(&rr)
-		//fmt.Printf("%#v\n", rr)
-
-		return c.Status(fiber.StatusOK).JSON(&rr)
-	})
-
-}
-
-func testing(db *gorm.DB) {
-	// Migrate the schema
-	db.AutoMigrate(&Product{})
-
-	// Create
-	db.Create(&Product{Code: "D42", Price: 100})
-
-	// Read
-	var product Product
-	db.First(&product, 1) // find product with integer primary key
-	fmt.Printf("%#v\n", product)
-
-	db.First(&product, "code = ?", "D42") // find product with code D42
-	fmt.Printf("%#v\n", product)
-
-	// Update - update product's price to 200
-	db.Model(&product).Update("Price", 200)
-	// Update - update multiple fields
-	db.Model(&product).Updates(Product{Price: 200, Code: "F42"}) // non-zero fields
-	db.Model(&product).Updates(map[string]interface{}{"Price": 200, "Code": "F42"})
-
-	// Delete - delete product
-	//db.Delete(&product, 1)
 }

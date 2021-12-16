@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
@@ -28,7 +29,7 @@ func configureMiddleware(app *fiber.App) {
 
 }
 
-func configureDatabase(config *app.Configuration) {
+func setDatabaseParameters(config *app.Configuration) {
 	// Gets the underlying DB connection
 
 	sqlDb, err := config.DB.DB()
@@ -47,6 +48,10 @@ func loadConfiguration(config *app.Configuration) {
 	// Port
 	if config.Port = os.Getenv("PORT"); config.Port == "" {
 		flag.StringVar(&config.Port, "port", ":3000", "Port to use")
+	}
+	// AutoMigrate
+	if config.AutoMigrate = strings.ToLower(os.Getenv("AUTO_MIGRATE")) == "true"; config.AutoMigrate == false {
+		flag.BoolVar(&config.AutoMigrate, "autoMigrate", true, "Should we auto migrate the database?")
 	}
 
 	// Production
@@ -89,10 +94,39 @@ func loadConfiguration(config *app.Configuration) {
 		flag.BoolVar(&config.GenerateTestData, "generateTestData", true, "Generate test data")
 	}
 
+	if config.DeleteLocalDatabase = strings.ToLower(os.Getenv("DELETE_LOCAL_DATABASE")) == "true"; config.DeleteLocalDatabase == false {
+		flag.BoolVar(&config.DeleteLocalDatabase, "deleteLocalDatabase", true, "Delete Local Database upon start")
+	}
+
+	// TEMP CONFIGS
+	// These should be removed when we're actually doing real work
+
+	if config.API_KEY = os.Getenv("API_KEY"); config.Port == "" {
+		flag.StringVar(&config.API_KEY, "API_KEY", "", "API key to use, will default to an empty string which will always deny")
+	}
+	//
 	flag.Parse()
 
 	if !strings.HasPrefix(config.Port, ":") {
 		config.Port = ":" + config.Port
+	}
+
+	if config.Production == false && config.DeleteLocalDatabase {
+		localDatabaseName := "./" + config.LocalDB
+		if f, err := os.Stat(localDatabaseName); errors.Is(err, os.ErrNotExist) {
+			// path/to/whatever does not exist
+			fmt.Println("File does not exist")
+		} else {
+			fmt.Println("File exists")
+			err := os.Remove(localDatabaseName)
+			if err != nil {
+				//log.Fatal(err)
+				fmt.Println(err)
+			}
+			os.Create(localDatabaseName)
+			fmt.Printf("%s -> %d", f.Name(), f.Size())
+
+		}
 	}
 
 	// Setup DB connection

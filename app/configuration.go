@@ -6,14 +6,17 @@ import (
 )
 
 type Configuration struct {
-	DB               *gorm.DB
-	WebApp           *fiber.App
-	MaxIdle          int
-	MaxOpenConn      int
-	LifetimeMinutes  int
-	Production       bool
-	Port             string
-	LocalDB          string
-	DatabaseUrl      string
-	GenerateTestData bool
+	DB                  *gorm.DB
+	WebApp              *fiber.App
+	MaxIdle             int
+	MaxOpenConn         int
+	LifetimeMinutes     int
+	Production          bool
+	Port                string
+	LocalDB             string
+	DatabaseUrl         string
+	GenerateTestData    bool
+	API_KEY             string
+	AutoMigrate         bool
+	DeleteLocalDatabase bool
 }
