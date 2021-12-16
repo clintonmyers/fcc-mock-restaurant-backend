@@ -132,20 +132,22 @@ func loadConfiguration(config *app.Configuration) {
 	// Setup DB connection
 	if config.Production {
 		fmt.Println("Connecting to production database")
-		db, err := gorm.Open(postgres.Open(config.DatabaseUrl), &gorm.Config{})
-		if err != nil {
+		if db, err := gorm.Open(postgres.Open(config.DatabaseUrl), &gorm.Config{}); err != nil {
 			panic("failed to connect database")
+		} else {
+			config.DB = db
 		}
-		config.DB = db
+
 	} else {
 		fmt.Println("Connecting to non-production database")
-		db, err := gorm.Open(sqlite.Open(config.LocalDB), &gorm.Config{
+		if db, err := gorm.Open(sqlite.Open(config.LocalDB), &gorm.Config{
 			PrepareStmt: true,
-		})
-		if err != nil {
+		}); err != nil {
 			panic("failed to connect database")
+
+		} else {
+			config.DB = db
 		}
-		config.DB = db
 	}
 
 	// Setup the web app
