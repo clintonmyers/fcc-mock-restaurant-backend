@@ -4,8 +4,7 @@ import "gorm.io/gorm"
 
 type Restaurant struct {
 	gorm.Model
-	Address
-	Users     []*User `gorm:"foreignKey:RestaurantId"`
-	Company   Company
-	CompanyId uint
+	Addresses    []Address     `json:"addresses"`
+	CompanyId    uint          `json:"companyId"`
+	Testimonials []Testimonial `json:"testimonials"`
 }
