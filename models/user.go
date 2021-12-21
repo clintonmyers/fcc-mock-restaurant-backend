@@ -7,8 +7,6 @@ type User struct {
 	Username  string     `json:"username"`
 	FirstName string     `json:"firstName"`
 	LastName  string     `json:"lastName"`
-	UserRole  []UserRole `json:"userRole"`
-	Addresses []Address  `json:"addresses"`
-	//Roles     []UserRole `json:"roles" gorm:"foreignKey:ID""`
-	//Addresses []Address  `json:"addresses"`
+	UserRole  []UserRole `json:"userRole"gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Addresses []Address  `json:"addresses"gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }

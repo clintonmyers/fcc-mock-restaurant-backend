@@ -3,6 +3,7 @@ package helpers
 import (
 	"errors"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
+	"gorm.io/gorm/clause"
 )
 
 type UserRepository interface {
@@ -20,7 +21,7 @@ func (m *MainRepository) GetUserById(user *models.User, u uint) error {
 	if u <= 0 {
 		return errors.New("invalid userID")
 	}
-	m.DB.Find(user, u)
+	m.DB.Preload(clause.Associations).Find(user, u)
 	return m.DB.Error
 }
 
@@ -28,11 +29,11 @@ func (m *MainRepository) GetUserByUsername(user *models.User, s string) error {
 	if len(s) == 0 {
 		return errors.New("invalid username")
 	}
-	m.DB.Where("username = ?", s).First(user)
+	m.DB.Preload(clause.Associations).Where("username = ?", s).First(user)
 	return m.DB.Error
 }
 
 func (m *MainRepository) GetAllUsers(users *[]models.User) error {
-	m.DB.Find(users)
+	m.DB.Preload(clause.Associations).Find(users)
 	return m.DB.Error
 }

@@ -10,19 +10,34 @@ import (
 	"testing"
 )
 
-func CreateTempDB(dir string) (*os.File, *gorm.DB, error) {
+func CreateAndMigrateTempDB(dir string) (*os.File, *gorm.DB, error) {
 	file, err := ioutil.TempFile(dir, "test_database")
 	if err != nil {
 		return nil, nil, err
 	}
 
 	db, err := gorm.Open(sqlite.Open(file.Name()), &gorm.Config{
-		PrepareStmt: true,
+		PrepareStmt:          true,
+		FullSaveAssociations: true,
 	})
 	if err != nil {
 		defer file.Close()
 		return nil, nil, err
 	}
+
+	// Migrate all models
+	// By migrating them for all we can catch modeling errors introduced by changes
+	db.AutoMigrate(&models.User{})
+	db.AutoMigrate(&models.UserRole{})
+	db.AutoMigrate(&models.Testimonial{})
+	db.AutoMigrate(&models.TestimonialImage{})
+	db.AutoMigrate(&models.Restaurant{})
+	db.AutoMigrate(&models.Address{})
+	db.AutoMigrate(&models.Company{})
+	db.AutoMigrate(&models.MenuImage{})
+	db.AutoMigrate(&models.Menu{})
+	db.AutoMigrate(&models.Role{})
+	db.AutoMigrate(&models.MenuItem{})
 
 	return file, db, err
 }
@@ -30,7 +45,7 @@ func CreateTempDB(dir string) (*os.File, *gorm.DB, error) {
 func TestMainRepository_GetUserById(t *testing.T) {
 
 	tempDir := t.TempDir()
-	file, db, err := CreateTempDB(tempDir)
+	file, db, err := CreateAndMigrateTempDB(tempDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,10 +53,6 @@ func TestMainRepository_GetUserById(t *testing.T) {
 
 	var mainRepo UserRepository
 	mainRepo = &MainRepository{DB: db}
-
-	// Migrate the DB tables
-	db.AutoMigrate(&models.User{})
-	db.AutoMigrate(&models.UserRole{})
 
 	// -------------------------------- //
 	// -------------------------------- //
@@ -86,7 +97,7 @@ func TestMainRepository_GetUserById(t *testing.T) {
 func TestMainRepository_GetAllUsers(t *testing.T) {
 
 	tempDir := t.TempDir()
-	file, db, err := CreateTempDB(tempDir)
+	file, db, err := CreateAndMigrateTempDB(tempDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,10 +105,10 @@ func TestMainRepository_GetAllUsers(t *testing.T) {
 
 	var mainRepo UserRepository
 	mainRepo = &MainRepository{DB: db}
-
-	// Migrate the DB tables
-	db.AutoMigrate(&models.User{})
-	db.AutoMigrate(&models.UserRole{})
+	//
+	//// Migrate the DB tables
+	//db.AutoMigrate(&models.User{})
+	//db.AutoMigrate(&models.UserRole{})
 
 	// -------------------------------- //
 	// -------------------------------- //
@@ -147,7 +158,7 @@ func TestMainRepository_GetAllUsers(t *testing.T) {
 func TestMainRepository_GetUserByUsername(t *testing.T) {
 
 	tempDir := t.TempDir()
-	file, db, err := CreateTempDB(tempDir)
+	file, db, err := CreateAndMigrateTempDB(tempDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,10 +166,10 @@ func TestMainRepository_GetUserByUsername(t *testing.T) {
 
 	var mainRepo UserRepository
 	mainRepo = &MainRepository{DB: db}
-
-	// Migrate the DB tables
-	db.AutoMigrate(&models.User{})
-	db.AutoMigrate(&models.UserRole{})
+	//
+	//// Migrate the DB tables
+	//db.AutoMigrate(&models.User{})
+	//db.AutoMigrate(&models.UserRole{})
 
 	// -------------------------------- //
 	// -------------------------------- //
@@ -202,7 +213,7 @@ func TestMainRepository_GetUserByUsername(t *testing.T) {
 
 func TestMainRepository_SaveUser(t *testing.T) {
 	tempDir := t.TempDir()
-	file, db, err := CreateTempDB(tempDir)
+	file, db, err := CreateAndMigrateTempDB(tempDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,9 +222,10 @@ func TestMainRepository_SaveUser(t *testing.T) {
 	var mainRepo UserRepository
 	mainRepo = &MainRepository{DB: db}
 
-	// Migrate the DB tables
-	db.AutoMigrate(&models.User{})
-	db.AutoMigrate(&models.UserRole{})
+	//// Migrate the DB tables
+	//db.AutoMigrate(&models.User{})
+	//db.AutoMigrate(&models.UserRole{})
+	//
 	// In order to test we just want to make sure that we can query a user from the db
 
 	// Create a user
