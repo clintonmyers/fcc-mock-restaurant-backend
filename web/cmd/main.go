@@ -18,7 +18,7 @@ func main() {
 	configureMiddleware(globalConfig.WebApp)
 	api.GetRoutes(globalConfig.WebApp, &globalConfig)
 
-	err := dbHelper.MigrateDb(&globalConfig)
+	err := dbHelper.MigrateDB(&globalConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,6 +28,16 @@ func main() {
 		fmt.Println("Running testingGorm()")
 		dbHelper.LoadTestData(&globalConfig)
 	}
+	// Still working on graceful shutdown.
+	// I believe this is a problem with WSL not properly registering OS signals
+	//c := make(chan os.Signal, 1) // Create signal channel
+	//signal.Notify(c, os.Interrupt)
+	//
+	//go func() {
+	//	_ = <-c
+	//	fmt.Println("Gracefully shutdown starting")
+	//	_ = globalConfig.WebApp.Shutdown()
+	//}()
 
 	log.Fatal(globalConfig.WebApp.Listen(globalConfig.Port))
 

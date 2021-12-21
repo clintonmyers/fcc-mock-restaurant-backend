@@ -2,192 +2,56 @@ package helpers
 
 import (
 	"fmt"
+	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
+	"gorm.io/gorm/clause"
 	"testing"
 )
 
 func TestMainRepository_SaveSanityCheck(t *testing.T) {
 	// Setup
 	tempDir := t.TempDir()
-	// Still need to make sure that we close the file resource or we'll have a problem with the directory being used
+
 	file, db, err := CreateAndMigrateTempDB(tempDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	defer file.Close()
-	var mainRepo TestimonialRepository
-	mainRepo = &MainRepository{DB: db}
-	_ = mainRepo
 
-	// -------------------------------- //
-	// -------------------------------- //
-	// Create the data
-	// -------------------------------- //
-	// -------------------------------- //
+	//var mainRepo TestimonialRepository
+	//mainRepo = &MainRepository{DB: db}
+	//_ = mainRepo
 
-	// Create the addresses
-	addy := models.Address{
-		Address: "123 Fake Street",
-		City:    "Dallas",
-		State:   "TX",
-		Zip:     "12345",
-		Active:  true,
-	}
-	addy2 := models.Address{
-		Address: "321 Fake Street",
-		City:    "Dallas",
-		State:   "TX",
-		Zip:     "54321",
-		Active:  true,
-	}
+	LoadTestData(&app.Configuration{DB: db})
 
-	//addy3 := models.Address{
-	//	Address: "456 Fake Street",
-	//	City:    "Dallas",
-	//	State:   "TX",
-	//	Zip:     "12345",
-	//	Active:  true,
+	//
+	//db.Save(&company1)
+	//
+	//if db.Error != nil {
+	//	t.Fail()
 	//}
 
-	// Create a new company
+	/*
+		Basic logic to make sure that our test data is correct
+	*/
 
-	company := models.Company{
-		Name:        "Fake Company 1",
-		Description: "This is a fake company to test getting testimonials",
-		Restaurants: nil,
-	}
-	// Create a Restaurant
+	LoadTestData(&app.Configuration{DB: db})
 
-	rest1 := models.Restaurant{
-		Addresses: []models.Address{addy},
-		//Testimonials: []models.Testimonial{},
-	}
-
-	rest2 := models.Restaurant{
-		Addresses: []models.Address{addy2},
-		//Testimonials: nil,
-	}
-
-	// Assign the restaurants to the company
-	//company.Restaurants = []models.Restaurant{rest1, rest2}
-
-	imgUrl := models.TestimonialImage{
-		URL: "TEST_LINK_1",
-	}
-
-	imgUrl2 := models.TestimonialImage{
-		URL: "TEST_LINK_2",
-	}
-
-	imgUrl3 := models.TestimonialImage{
-		URL: "TEST_LINK_3",
-	}
-	// Create a Testimonial
-	testimonial := models.Testimonial{
-		//Restaurant: rest,
-		Header:    "",
-		Body:      "",
-		ImageUrls: []models.TestimonialImage{imgUrl, imgUrl2, imgUrl3},
-	}
-	testimonial2 := models.Testimonial{
-		//Restaurant: rest,
-		Header:    "",
-		Body:      "",
-		ImageUrls: []models.TestimonialImage{imgUrl, imgUrl2, imgUrl3},
-	}
-	testimonial3 := models.Testimonial{
-		//Restaurant: rest,
-		Header:    "",
-		Body:      "",
-		ImageUrls: []models.TestimonialImage{imgUrl, imgUrl2, imgUrl3},
-	}
-	testimonial4 := models.Testimonial{
-		//Restaurant: rest,
-		Header:    "",
-		Body:      "",
-		ImageUrls: []models.TestimonialImage{imgUrl, imgUrl2, imgUrl3},
-	}
-	testimonial5 := models.Testimonial{
-		//Restaurant: rest,
-		Header:    "",
-		Body:      "",
-		ImageUrls: []models.TestimonialImage{imgUrl, imgUrl2, imgUrl3},
-	}
-
-	rest1.Testimonials = []models.Testimonial{testimonial, testimonial2, testimonial3}
-	rest2.Testimonials = []models.Testimonial{testimonial4, testimonial5}
-
-	//db.FullSaveAssociations = true
-	db.Save(&rest1)
-	db.Save(&rest2)
-	company.Restaurants = []models.Restaurant{rest1, rest2}
-	db.Save(&company)
-	fmt.Printf("TESTING COMPANY: %#v\n", company)
-
-	var company2 models.Company
-	db.Find(&company2, 1)
+	var testCompany models.Company
+	// The following work but don't pull in all of the associations for a complete data object
+	//db.Find(&testCompany, 1)
+	//db.Preload(clause.Associations).Preload("Menus").First(&testCompany)
+	db.Preload(clause.Associations).Preload("Restaurants.Testimonials." + clause.Associations).Preload("Restaurants.Menus.MenuItems." + clause.Associations).First(&testCompany)
 
 	// Basic sanity check to make sure that we can actually save all the data
-	if company2.ID != 1 &&
-		len(company2.Restaurants) != 2 &&
-		len(company2.Restaurants[0].Testimonials) != 3 &&
-		len(company2.Restaurants[1].Testimonials) != 2 {
+	if testCompany.ID != 1 ||
+		len(testCompany.Restaurants) != 2 ||
+		len(testCompany.Restaurants[0].Testimonials) != 3 ||
+		len(testCompany.Restaurants[1].Testimonials) != 2 ||
+		len(testCompany.Restaurants[0].Menus) != 1 ||
+		len(testCompany.Restaurants[1].Menus) != 1 {
 		t.Fail()
 	}
-
-	//db.Preload(clause.Associations).Find(&company2, 1)
-	//db.Preload("Restaurants").Preload("Testimonials").Find(&company2, 1)
-	//db.Preload("Restaurant.Testimonials").Find(&company2, 1)
-	//db.Where("RestaurantID")
-	//db.Preload("Testimonials").Preload("Restaurants").Find(&company2, 1)
-	// This is testing the Restaurant API not strictly the testimonial one
-	//rest.Testimonials = append(rest.Testimonials, testimonial)
-
-	// -------------------------------- //
-	// -------------------------------- //
-	// Save to the database
-	// -------------------------------- //
-	// -------------------------------- //
-	//
-	//count := db.Save(&rest).RowsAffected
-	//if db.Error != nil {
-	//	t.Fatal(db.Error)
-	//}
-	//fmt.Println("resty count: ", count)
-	//
-	//c, err := mainRepo.SaveTestimonial(&testimonial)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//
-	//fmt.Println("COUNT: ", c)
-	//
-	//var restaurant models.Restaurant
-	//db.First(&restaurant)
-	//fmt.Println(restaurant)
-
-	// -------------------------------- //
-	// -------------------------------- //
-	// Make the actual testing happen
-	// -------------------------------- //
-	// -------------------------------- //
-
-	//var testy models.Testimonial
-	////db.Preload(clause.Associations).First(&testy)
-	//mainRepo.GetTestimonialById(&testy, testimonial.ID)
-	//fmt.Println(testy)
-	//
-	//if testy.ID != 1 {
-	//	fmt.Println("This should have been saved properly")
-	//	fmt.Printf("OUTPUT: %#v", testy)
-	//	t.Fail()
-	//}
-	//if len(testy.ImageUrls) < 1 || testy.ImageUrls[0].ID != 1 {
-	//	fmt.Println("should have had some image urls")
-	//	t.Fail()
-	//}
-	//fmt.Printf("\n %#v\n", testy.ImageUrls)
 
 }
 

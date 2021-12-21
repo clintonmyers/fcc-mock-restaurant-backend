@@ -27,6 +27,8 @@ func CreateAndMigrateTempDB(dir string) (*os.File, *gorm.DB, error) {
 
 	// Migrate all models
 	// By migrating them for all we can catch modeling errors introduced by changes
+	//MigrateDB(&app.Configuration{DB: db})
+
 	db.AutoMigrate(&models.User{})
 	db.AutoMigrate(&models.UserRole{})
 	db.AutoMigrate(&models.Testimonial{})
