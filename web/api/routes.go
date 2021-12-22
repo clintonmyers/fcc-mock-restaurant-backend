@@ -33,109 +33,11 @@ func ApiHeaderAuth(ctx *fiber.Ctx, cfg *app.Configuration) error {
 	return ctx.Next()
 }
 
-func reviewsGrouping(g fiber.Router, config *app.Configuration) {
-	//g := app.Group("api", func(c *fiber.Ctx) error {
-	//	m := c.Method()
-	//	// Only allow idempotent methods without access token
-	//	if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
-	//		return c.Next()
-	//	}
-	//
-	//	// This needs to be first, so we will prevent an empty string from allowing access by default
-	//	authToken := c.Get("AUTH_TOKEN", "")
-	//
-	//	if authToken == "" || authToken != config.API_KEY {
-	//		// We're returning a 404 because we want to avoid people scanning for apis that are guarded
-	//		return c.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
-	//	}
-	//
-	//	return c.Next()
-	//})
-
-	//g.All("/testing/:name", sayHello)
-	//
-	//// TODO the 'reviews/' endpoints will need to have some kind of check to make sure users have access
-	//
-	//g.Get("/reviews/:id", func(c *fiber.Ctx) error {
-	//	if id := c.Params("id"); id != "" {
-	//		atoi, err := strconv.Atoi(id)
-	//		if err != nil {
-	//			return c.Status(fiber.StatusNotFound).SendString(err.Error())
-	//		}
-	//
-	//		var review models.Testimonial
-	//		config.DB.Find(&review, atoi)
-	//
-	//		if uint(atoi) == review.ID {
-	//
-	//			jsonReview := models.ReviewJson{}
-	//
-	//			review.ToJsonVersion(&jsonReview)
-	//
-	//			return c.Status(fiber.StatusOK).JSON(&jsonReview)
-	//		}
-	//
-	//	}
-	//	return c.SendStatus(fiber.StatusNotFound)
-	//
-	//})
-	//g.Put("/reviews/:id", func(c *fiber.Ctx) error {
-	//	// Can only update a review if we know which one we want to update
-	//	id := c.Params("id")
-	//	if id == "" || id == "0" {
-	//		return c.SendStatus(fiber.StatusBadRequest)
-	//	}
-	//	// TODO user verification
-	//	// Parse what we're given by the user
-	//	var json models.ReviewJson
-	//	if err := c.BodyParser(&json); err == nil {
-	//
-	//		if s, err := strconv.Atoi(id); err == nil {
-	//			// Convert and save the update
-	//			json.ID = uint(s)
-	//			var review models.Testimonial
-	//			json.ToRegularVersion(&review)
-	//			if config.DB.Save(&review).Error == nil {
-	//				return c.Status(fiber.StatusCreated).SendString(c.Path())
-	//			}
-	//		}
-	//	}
-	//	return c.SendStatus(fiber.StatusBadRequest)
-	//})
-	//
-	//g.Post("/reviews", func(c *fiber.Ctx) error {
-	//	// TODO user verification
-	//	if c.Params("id", "0") == "0" {
-	//
-	//		var json models.ReviewJson
-	//
-	//		if err := c.BodyParser(&json); err == nil {
-	//			// already looking at this in the params section
-	//			//if json.ID != 0 {
-	//			//	log.Println("Post for reviews/ api contains ID so not saving")
-	//			//	return c.SendStatus(fiber.StatusBadRequest)
-	//			//}
-	//
-	//			var review models.Testimonial
-	//			json.ToRegularVersion(&review)
-	//			config.DB.Create(&review)
-	//			return c.Status(fiber.StatusCreated).SendString(strings.TrimSuffix(c.Route().Path, ":id") + "/" + strconv.Itoa(int(review.ID)))
-	//		}
-	//	}
-	//
-	//	return c.SendStatus(fiber.StatusBadRequest)
-	//})
-
-}
-
 func GetRoutes(app *fiber.App, config *app.Configuration) {
 	fmt.Println("Setting Routes")
 
 	app.Get("/hello/:name", sayHello)
 
-	//api := app.Group("/api", logger.New(), func(ctx *fiber.Ctx) error {
-	//	return ApiHeaderAuth(ctx, config)
-	//})
 	api := app.Group("/api", logger.New())
 	api = api.Group("/current")
 
@@ -166,12 +68,20 @@ func companyGrouping(api fiber.Router, config *app.Configuration) {
 func restaurantGrouping(group fiber.Router, config *app.Configuration) {
 	api := group.Group("/restaurant")
 
+	// TODO need to better understand gofiber and build out a better way to DRY the id validation
+	//api := group.Group("/restaurant", func(c *fiber.Ctx) error {
+	//	if c.Params("restaurantID", "0") != "0"{
+	//		return c.Next()
+	//	}
+	//	return c.SendStatus(fiber.StatusNotFound)
+	//})
+
 	api.Get("/:restaurantID/menu", func(c *fiber.Ctx) error {
 		if id, err := strconv.ParseUint(c.Params("restaurantID", "0"), 10, 64); err == nil && id > 0 {
 			var menus []models.Menu
 			repo := helpers.MainRepository{DB: config.DB}
 
-			if _, err := repo.GetALlMenusByRestaurantId(&menus, id); err == nil {
+			if err := repo.GetAllMenusByRestaurantId(&menus, id); err == nil {
 				return c.Status(fiber.StatusOK).JSON(&menus)
 			}
 		}
@@ -193,8 +103,7 @@ func restaurantGrouping(group fiber.Router, config *app.Configuration) {
 			if exists := repo.CheckRestaurantIdExists(rId); exists {
 				menu.RestaurantID = rId
 
-				rowsAffected, err := repo.SaveMenu(&menu)
-				if err == nil && rowsAffected >= 1 {
+				if err := repo.SaveMenu(&menu); err == nil {
 					return c.Status(fiber.StatusCreated).JSON(&menu)
 				}
 			}
@@ -235,6 +144,83 @@ func restaurantGrouping(group fiber.Router, config *app.Configuration) {
 		return c.SendStatus(fiber.StatusBadRequest)
 	})
 
+	api.Get("/:restaurantID/menu/:menuID/menuItem/", func(c *fiber.Ctx) error {
+		rID, rErr := strconv.ParseUint(c.Params("restaurantID", "0"), 10, 64)
+		mID, mErr := strconv.ParseUint(c.Params("menuID", "0"), 10, 64)
+
+		if rErr == nil && mErr == nil && rID >= 1 && mID >= 1 {
+			var items []models.MenuItem
+
+			repo := helpers.MainRepository{DB: config.DB}
+
+			if err := repo.GetAllMenuItemsByRestaurantAndMenuAndMenuItemIDs(&items, mID, rID); err == nil {
+				return c.JSON(items)
+			}
+		}
+
+		return c.SendStatus(fiber.StatusNotFound)
+	})
+
+	api.Get("/:restaurantID/menu/:menuID/menuItem/:itemID", func(c *fiber.Ctx) error {
+		rID, rErr := strconv.ParseUint(c.Params("restaurantID", "0"), 10, 64)
+		mID, mErr := strconv.ParseUint(c.Params("menuID", "0"), 10, 64)
+		iID, iErr := strconv.ParseUint(c.Params("menuID", "0"), 10, 64)
+
+		if rErr == nil && mErr == nil && iErr == nil &&
+			rID >= 1 && mID >= 1 && iID >= 1 {
+			var item models.MenuItem
+
+			repo := helpers.MainRepository{DB: config.DB}
+
+			if err := repo.GetMenuItemByRestaurantAndMenuAndMenuItemIDs(&item, iID, mID, rID); err == nil {
+				return c.JSON(item)
+			}
+		}
+
+		return c.SendStatus(fiber.StatusNotFound)
+	})
+
+	api.Put("/:restaurantID/menu/:menuID/menuItem/:itemID", func(c *fiber.Ctx) error {
+		rID, rErr := strconv.ParseUint(c.Params("restaurantID", "0"), 10, 64)
+		mID, mErr := strconv.ParseUint(c.Params("menuID", "0"), 10, 64)
+		iID, iErr := strconv.ParseUint(c.Params("menuID", "0"), 10, 64)
+
+		if rErr == nil && mErr == nil && iErr == nil && rID >= 1 && mID >= 1 && iID >= 1 {
+
+			var item map[string]interface{}
+			err := c.BodyParser(&item)
+
+			if err == nil {
+				if num, pErr := strconv.ParseUint(fmt.Sprintf("%#v", item["ID"]), 10, 64); pErr == nil && num == mID {
+
+					repo := helpers.MainRepository{DB: config.DB}
+					if err := repo.UpdateMenuItem(&item, num, mID, rID); err != nil {
+						return c.SendStatus(fiber.StatusInternalServerError)
+					}
+					return c.SendStatus(fiber.StatusAccepted)
+				}
+			}
+		}
+		return c.SendStatus(fiber.StatusNotFound)
+	})
+
+	api.Delete("/:restaurantID/menu/:menuID/menuItem/:itemID", func(c *fiber.Ctx) error {
+		rID, rErr := strconv.ParseUint(c.Params("restaurantID", "0"), 10, 64)
+		mID, mErr := strconv.ParseUint(c.Params("menuID", "0"), 10, 64)
+		iID, iErr := strconv.ParseUint(c.Params("menuID", "0"), 10, 64)
+
+		if rErr == nil && mErr == nil && iErr == nil && rID >= 1 && mID >= 1 && iID >= 1 {
+			repo := helpers.MainRepository{DB: config.DB}
+
+			if err := repo.DeleteMenuItem(iID, mID, rID); err == nil {
+
+				c.SendStatus(fiber.StatusAccepted)
+			}
+
+		}
+		return c.SendStatus(fiber.StatusNotFound)
+	})
+
 	api.Post("/:restaurantID/menu/:menuID/menuItem", func(c *fiber.Ctx) error {
 		rID, rErr := strconv.ParseUint(c.Params("restaurantID", "0"), 10, 64)
 		mID, mErr := strconv.ParseUint(c.Params("menuID", "0"), 10, 64)
@@ -250,7 +236,10 @@ func restaurantGrouping(group fiber.Router, config *app.Configuration) {
 				exists := repo.CheckMenuAndRestaurantIDsExist(mID, rID)
 				if exists {
 					item.MenuID = uint(mID)
-					repo.SaveMenuItem(&item)
+					if count, err := repo.SaveMenuItem(&item); count <= 0 || err != nil {
+						return c.SendStatus(fiber.StatusInternalServerError)
+					}
+
 					return c.SendStatus(fiber.StatusCreated)
 				}
 			}
