@@ -13,6 +13,14 @@ func (m *MainRepository) GetALlMenusByRestaurantId(menus *[]models.Menu, u uint)
 	return m.DB.Preload(clause.Associations).Where("restaurant_id = ?", u).Find(menus).RowsAffected, m.DB.Error
 }
 
+func (m *MainRepository) SaveMenu(menu *models.Menu) (int64, error) {
+	if menu.RestaurantID == 0 {
+		return 0, errors.New("unable to save menu element without attached restaurantID")
+	}
+
+	return m.DB.Save(menu).RowsAffected, m.DB.Error
+}
+
 /*
 
 func (m *MainRepository) GetAllTestimonialsByRestaurantId(testimonials *[]models.Testimonial, u uint) error {

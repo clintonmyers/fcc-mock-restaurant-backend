@@ -15,6 +15,24 @@ func sayHello(c *fiber.Ctx) error {
 	return c.SendString(msg)
 }
 
+func ApiHeaderAuth(ctx *fiber.Ctx, cfg *app.Configuration) error {
+	m := ctx.Method()
+	// Only allow idempotent methods without access token
+	if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
+		return ctx.Next()
+	}
+
+	// This needs to be first, so we will prevent an empty string from allowing access by default
+	authToken := ctx.Get("AUTH_TOKEN", "")
+
+	if authToken == "" || authToken != cfg.API_KEY {
+		// We're returning a 404 because we want to avoid people scanning for apis that are guarded
+		return ctx.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
+	}
+
+	return ctx.Next()
+}
+
 func reviewsGrouping(g fiber.Router, config *app.Configuration) {
 	//g := app.Group("api", func(c *fiber.Ctx) error {
 	//	m := c.Method()
@@ -115,11 +133,14 @@ func GetRoutes(app *fiber.App, config *app.Configuration) {
 
 	app.Get("/hello/:name", sayHello)
 
+	//api := app.Group("/api", logger.New(), func(ctx *fiber.Ctx) error {
+	//	return ApiHeaderAuth(ctx, config)
+	//})
 	api := app.Group("/api", logger.New())
+	api = api.Group("/current")
 
 	api.Get("/hello/:name", func(ctx *fiber.Ctx) error {
 		return sayHello(ctx)
-
 	})
 
 	companyGrouping(api, config)
@@ -177,6 +198,7 @@ func companyGrouping(api fiber.Router, config *app.Configuration) {
 		}
 		return c.SendStatus(fiber.StatusNotFound)
 	})
+
 }
 
 func restaurantGrouping(api fiber.Router, config *app.Configuration) {
@@ -190,6 +212,31 @@ func restaurantGrouping(api fiber.Router, config *app.Configuration) {
 			}
 		}
 		return c.SendStatus(fiber.StatusNotFound)
+	})
+
+	api.Post("/restaurant/:restaurantID/menu", func(c *fiber.Ctx) error {
+		if id, err := strconv.Atoi(c.Params("restaurantID", "0")); err == nil && id > 0 {
+
+			// Can we even parse this object?
+			var menu models.Menu
+			if parseErr := c.BodyParser(&menu); parseErr != nil {
+				return c.Status(fiber.StatusBadRequest).SendString(parseErr.Error())
+				//return c.SendStatus(fiber.StatusBadRequest)
+			}
+			// If we can find a restaurant that exists, we can add it
+			repo := helpers.MainRepository{DB: config.DB}
+			rId := uint(id)
+			if exists := repo.CheckRestaurantIdExists(rId); exists {
+				menu.RestaurantID = rId
+
+				rowsAffected, err := repo.SaveMenu(&menu)
+				if err == nil && rowsAffected >= 1 {
+					return c.Status(fiber.StatusCreated).JSON(&menu)
+				}
+			}
+			//return c.SendStatus(fiber.StatusNotFound)
+		}
+		return c.SendStatus(fiber.StatusBadRequest)
 	})
 }
 
