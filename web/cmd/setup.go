@@ -58,6 +58,10 @@ func loadConfiguration(config *app.Configuration) {
 	if config.Production = strings.ToLower(os.Getenv("production")) == "true"; config.Production == false {
 		flag.BoolVar(&config.Production, "production", false, "Is this a production run?")
 	}
+	// Production
+	if config.GenerateLocalData = strings.ToLower(os.Getenv("GENERATE_LOCAL_DATA")) == "true"; config.GenerateLocalData == false {
+		flag.BoolVar(&config.Production, "production", false, "Is this a production run?")
+	}
 
 	// MaxIdle
 	if s, err := strconv.Atoi(os.Getenv("maxIdle")); err == nil {
