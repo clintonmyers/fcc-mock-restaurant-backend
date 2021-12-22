@@ -15,7 +15,7 @@ type MenuItem struct {
 type MenuImage struct {
 	gorm.Model
 	ImageURL   string `json:"ImageURL"`
-	MenuItemId uint   `json:"menuItemId"`
+	MenuItemID uint   `json:"menuItemID"`
 }
 
 type Menu struct {

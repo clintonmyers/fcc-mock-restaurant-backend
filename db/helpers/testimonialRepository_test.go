@@ -41,7 +41,10 @@ func TestMainRepository_SaveSanityCheck(t *testing.T) {
 	// The following work but don't pull in all of the associations for a complete data object
 	//db.Find(&testCompany, 1)
 	//db.Preload(clause.Associations).Preload("Menus").First(&testCompany)
-	db.Preload(clause.Associations).Preload("Restaurants.Testimonials." + clause.Associations).Preload("Restaurants.Menus.MenuItems." + clause.Associations).First(&testCompany)
+	db.Preload(clause.Associations).
+		Preload("Restaurants.Testimonials." + clause.Associations).
+		Preload("Restaurants.Menus.MenuItems." + clause.Associations).
+		First(&testCompany)
 
 	// Basic sanity check to make sure that we can actually save all the data
 	if testCompany.ID != 1 ||

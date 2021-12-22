@@ -10,6 +10,10 @@ func (m *MainRepository) GetCompanyByID(c *models.Company, id uint) (int64, erro
 	if id <= 0 {
 		return 0, errors.New("invalid companyID")
 	}
-	m.DB.Preload(clause.Associations).Preload("Restaurants.Testimonials."+clause.Associations).Preload("Restaurants.Menus.MenuItems."+clause.Associations).Find(c, id)
+	m.DB.Preload(clause.Associations).
+		Preload("Restaurants.Testimonials."+clause.Associations).
+		Preload("Restaurants.Menus.MenuItems."+clause.Associations).
+		Find(c, id)
+
 	return 0, nil
 }
