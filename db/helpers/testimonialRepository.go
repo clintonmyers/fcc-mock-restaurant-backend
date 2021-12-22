@@ -42,7 +42,7 @@ func (m *MainRepository) GetAllTestimonials(testimonials *[]models.Testimonial) 
 }
 
 func (m *MainRepository) GetAllTestimonialsByRestaurantId(testimonials *[]models.Testimonial, u uint) error {
-	m.DB.Preload(clause.Associations).Where("restaurantId = ?", u).Find(testimonials)
+	m.DB.Preload(clause.Associations).Where("restaurantID = ?", u).Find(testimonials)
 	return m.DB.Error
 }
 

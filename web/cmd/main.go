@@ -25,7 +25,7 @@ func main() {
 
 	if globalConfig.Production == false {
 		// Will generate configuration data
-		fmt.Println("Running testingGorm()")
+		fmt.Println("Loading Test Data")
 		dbHelper.LoadTestData(&globalConfig)
 	}
 	// Still working on graceful shutdown.

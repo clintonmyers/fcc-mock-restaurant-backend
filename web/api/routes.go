@@ -3,7 +3,10 @@ package api
 import (
 	"fmt"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
+	"github.com/clintonmyers/fcc-mock-restaurant-backend/db/helpers"
+	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"strconv"
 )
 
@@ -108,28 +111,86 @@ func reviewsGrouping(g fiber.Router, config *app.Configuration) {
 }
 
 func GetRoutes(app *fiber.App, config *app.Configuration) {
+	fmt.Println("Setting Routes")
 
 	app.Get("/hello/:name", sayHello)
 
-	g := app.Group("api", func(c *fiber.Ctx) error {
-		m := c.Method()
-		// Only allow idempotent methods without access token
-		if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
-			return c.Next()
-		}
+	api := app.Group("/api", logger.New())
 
-		// This needs to be first, so we will prevent an empty string from allowing access by default
-		authToken := c.Get("AUTH_TOKEN", "")
+	api.Get("/hello/:name", func(ctx *fiber.Ctx) error {
+		return sayHello(ctx)
 
-		if authToken == "" || authToken != config.API_KEY {
-			// We're returning a 404 because we want to avoid people scanning for apis that are guarded
-			return c.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
-		}
-
-		return c.Next()
 	})
-	reviewsGrouping(g, config)
-	menuItemGrouping(g, config)
+
+	companyGrouping(api, config)
+	restaurantGrouping(api, config)
+	//api.Get("/company/:companyId", func(c *fiber.Ctx) error {
+	//
+	//	if id, err := strconv.Atoi(c.Params("companyId", "0")); err == nil && id > 0 {
+	//		var comp models.Company
+	//		repo := helpers.MainRepository{DB: config.DB}
+	//		if _, err := repo.GetCompanyByID(&comp, uint(id)); err == nil {
+	//			return c.Status(fiber.StatusOK).JSON(&comp)
+	//		}
+	//
+	//	}
+	//	return c.SendStatus(fiber.StatusTeapot)
+	//})
+
+	//g := app.Group("/api", func(c *fiber.Ctx) error {
+	//	m := c.Method()
+	//	// Only allow idempotent methods without access token
+	//	if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
+	//		return c.Next()
+	//	}
+	//
+	//	// This needs to be first, so we will prevent an empty string from allowing access by default
+	//	authToken := c.Get("AUTH_TOKEN", "")
+	//
+	//	if authToken == "" || authToken != config.API_KEY {
+	//		// We're returning a 404 because we want to avoid people scanning for apis that are guarded
+	//		return c.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
+	//	}
+	//
+	//	return c.Next()
+	//})
+	//g = app.Group("/current")
+	//g.Get("/test", func(ctx *fiber.Ctx) error {
+	//	return ctx.Status(fiber.StatusOK).SendString("TESTING")
+	//})
+	//companyGrouping(g, config)
+	//
+	//reviewsGrouping(g, config)
+	//menuItemGrouping(g, config)
+}
+
+func companyGrouping(api fiber.Router, config *app.Configuration) {
+	api.Get("/company/:companyId", func(c *fiber.Ctx) error {
+
+		if id, err := strconv.Atoi(c.Params("companyId", "0")); err == nil && id > 0 {
+			var comp models.Company
+			repo := helpers.MainRepository{DB: config.DB}
+			if _, err := repo.GetCompanyByID(&comp, uint(id)); err == nil {
+				return c.Status(fiber.StatusOK).JSON(&comp)
+			}
+
+		}
+		return c.SendStatus(fiber.StatusNotFound)
+	})
+}
+
+func restaurantGrouping(api fiber.Router, config *app.Configuration) {
+	api.Get("/restaurant/:restaurantID/menu", func(c *fiber.Ctx) error {
+		if id, err := strconv.Atoi(c.Params("restaurantID", "0")); err == nil && id > 0 {
+			var menus []models.Menu
+			repo := helpers.MainRepository{DB: config.DB}
+
+			if _, err := repo.GetALlMenusByRestaurantId(&menus, uint(id)); err == nil {
+				return c.Status(fiber.StatusOK).JSON(&menus)
+			}
+		}
+		return c.SendStatus(fiber.StatusNotFound)
+	})
 }
 
 func menuItemGrouping(g fiber.Router, config *app.Configuration) {
