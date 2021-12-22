@@ -19,4 +19,5 @@ type Configuration struct {
 	API_KEY             string
 	AutoMigrate         bool
 	DeleteLocalDatabase bool
+	GenerateLocalData   bool
 }
