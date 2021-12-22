@@ -1,29 +1,19 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Testimonial struct {
 	gorm.Model
-	//ID      int32  `json:"id"`
-	Title   string `json:"title"`
-	Comment string `json:"comment"`
-	Rating  Rating `json:"rating"`
+	Header       string             `json:"header"`
+	Body         string             `json:"body"`
+	ImageUrls    []TestimonialImage `json:"imageUrls" gorm:"constraint:OnUpdate:CASCADE,OnSave:CASCADE,OnDelete:SET NULL;"`
+	RestaurantID uint               `json:"restaurantID"`
 }
 
-type Rating int8
-
-func OneStarRating() Rating {
-	return 1
-}
-func TwoStarRating() Rating {
-	return 2
-}
-func ThreeStarRating() Rating {
-	return 3
-}
-func FourStarRating() Rating {
-	return 4
-}
-func FiveStarRating() Rating {
-	return 5
+type TestimonialImage struct {
+	gorm.Model
+	URL           string `json:"URL"`
+	TestimonialId uint   `json:"TestimonialId"`
 }
