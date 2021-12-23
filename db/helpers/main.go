@@ -4,7 +4,6 @@ import (
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type MainRepository struct {
@@ -193,10 +192,11 @@ func LoadTestData(config *app.Configuration) error {
 		Restaurants: []models.Restaurant{rest1, rest2},
 	}
 	//company.Restaurants = []models.Restaurant{rest1, rest2}
-	db.Debug().Clauses(clause.OnConflict{
-		DoNothing: true,
-	}).Save(&company)
+	//db.Debug().Clauses(clause.OnConflict{
+	//	DoNothing: true,
+	//}).Save(&company)
 	//db.Save()
+	db.Create(&company)
 	if db.Error != nil {
 		return db.Error
 	}
