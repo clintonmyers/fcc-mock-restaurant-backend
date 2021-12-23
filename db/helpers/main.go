@@ -195,8 +195,8 @@ func LoadTestData(config *app.Configuration) error {
 	//company.Restaurants = []models.Restaurant{rest1, rest2}
 	db.Debug().Clauses(clause.OnConflict{
 		DoNothing: true,
-	})
-	db.Save(&company)
+	}).Save(&company)
+	//db.Save()
 	if db.Error != nil {
 		return db.Error
 	}
