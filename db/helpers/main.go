@@ -4,6 +4,7 @@ import (
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type MainRepository struct {
@@ -11,20 +12,20 @@ type MainRepository struct {
 }
 
 func MigrateDB(config *app.Configuration) error {
-	db := config.DB
+	//db := config.DB
 	var err error
-
-	err = db.AutoMigrate(&models.Company{})
-	err = db.AutoMigrate(&models.Restaurant{})
-	err = db.AutoMigrate(&models.User{})
-	err = db.AutoMigrate(&models.UserRole{})
-	err = db.AutoMigrate(&models.Testimonial{})
-	err = db.AutoMigrate(&models.TestimonialImage{})
-	err = db.AutoMigrate(&models.Address{})
-	err = db.AutoMigrate(&models.MenuImage{})
-	err = db.AutoMigrate(&models.Menu{})
-	err = db.AutoMigrate(&models.Role{})
-	err = db.AutoMigrate(&models.MenuItem{})
+	//
+	//err = db.AutoMigrate(&models.Company{})
+	//err = db.AutoMigrate(&models.Restaurant{})
+	//err = db.AutoMigrate(&models.User{})
+	//err = db.AutoMigrate(&models.UserRole{})
+	//err = db.AutoMigrate(&models.Testimonial{})
+	//err = db.AutoMigrate(&models.TestimonialImage{})
+	//err = db.AutoMigrate(&models.Address{})
+	//err = db.AutoMigrate(&models.MenuImage{})
+	//err = db.AutoMigrate(&models.Menu{})
+	//err = db.AutoMigrate(&models.Role{})
+	//err = db.AutoMigrate(&models.MenuItem{})
 
 	return err
 }
@@ -183,12 +184,17 @@ func LoadTestData(config *app.Configuration) error {
 		Description: "First Fake Company",
 	}
 
-	db.Create(&company)
-
+	db.Save(&company)
+	//
 	rest1.CompanyID = company.ID
 	rest2.CompanyID = company.ID
-	db.Create(rest1)
-	db.Create(rest2)
+
+	db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "company_id"}},
+	}).Save(&rest1)
+	db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "company_id"}},
+	}).Save(&rest2)
 	//company.Restaurants = []models.Restaurant{rest1, rest2}
 	//db.Clauses(clause.OnConflict{DoNothing: true}).Save(&company)
 
