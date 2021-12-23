@@ -136,7 +136,24 @@ func loadConfiguration(config *app.Configuration) {
 	// Setup DB connection
 	if config.Production {
 		fmt.Println("Connecting to production database")
-		if db, err := gorm.Open(postgres.Open(config.DatabaseUrl), &gorm.Config{}); err != nil {
+		if db, err := gorm.Open(postgres.Open(config.DatabaseUrl), &gorm.Config{
+			SkipDefaultTransaction:                   false,
+			NamingStrategy:                           nil,
+			FullSaveAssociations:                     false,
+			Logger:                                   nil,
+			NowFunc:                                  nil,
+			DryRun:                                   false,
+			PrepareStmt:                              true,
+			DisableForeignKeyConstraintWhenMigrating: true,
+			DisableNestedTransaction:                 false,
+			AllowGlobalUpdate:                        false,
+			QueryFields:                              false,
+			CreateBatchSize:                          0,
+			ClauseBuilders:                           nil,
+			ConnPool:                                 nil,
+			Dialector:                                nil,
+			Plugins:                                  nil,
+		}); err != nil {
 			panic("failed to connect database")
 		} else {
 			config.DB = db
