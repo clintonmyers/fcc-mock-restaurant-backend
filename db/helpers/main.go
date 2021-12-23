@@ -199,7 +199,7 @@ func LoadTestData(config *app.Configuration) error {
 	//db.Save()
 	//db.Clauses(clause.OnConflict{DoNothing: true}).Create(&company)
 	db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "id"}},
+		Columns: []clause.Column{{Name: "ID"}},
 		//DoUpdates: clause.Assignments(map[string]interface{}{"role": "user"}),
 	}).Create(&company)
 	//db.Create(&company)
