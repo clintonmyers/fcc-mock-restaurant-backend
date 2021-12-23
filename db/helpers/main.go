@@ -4,7 +4,6 @@ import (
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type MainRepository struct {
@@ -48,22 +47,6 @@ func LoadTestData(config *app.Configuration) error {
 		Zip:     "54321",
 		Active:  true,
 	}
-
-	//addy3 := models.Address{
-	//	Address: "456 Fake Street",
-	//	City:    "Dallas",
-	//	State:   "TX",
-	//	Zip:     "12345",
-	//	Active:  true,
-	//}
-
-	//// Create a new company
-	//
-	//company := models.Company{
-	//	Name:        "Fake Company 1",
-	//	Description: "This is a fake company to test getting testimonials",
-	//	Restaurants: nil,
-	//}
 
 	// Create a Menu
 
@@ -186,28 +169,30 @@ func LoadTestData(config *app.Configuration) error {
 	rest1.Testimonials = []models.Testimonial{testimonial, testimonial2, testimonial3}
 	rest2.Testimonials = []models.Testimonial{testimonial4, testimonial5}
 
-	db.FullSaveAssociations = true
+	//company := models.Company{
+	//	ID:          1,
+	//	Name:        "Fake Company 1",
+	//	Description: "First Fake Company",
+	//	Restaurants: []models.Restaurant{rest1, rest2},
+	//}
+	//if err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&company).Error; err != nil {
+	//	return db.Error
+	//}
 	company := models.Company{
 		Name:        "Fake Company 1",
 		Description: "First Fake Company",
-		Restaurants: []models.Restaurant{rest1, rest2},
 	}
-	//company.Restaurants = []models.Restaurant{rest1, rest2}
-	//db.Debug().Clauses(clause.OnConflict{
-	//	DoNothing: true,
-	//}).Save(&company)
-	//db.Save()
-	db.Clauses(clause.OnConflict{DoNothing: true}).Create(&company)
-	//db.Clauses(clause.OnConflict{
-	//	Columns: []clause.Column{{Name: "ID"}},
-	//DoUpdates: clause.Assignments(map[string]interface{}{"role": "user"}),
-	//}).Create(&company)
-	//db.Create(&company)
-	if db.Error != nil {
-		return db.Error
-	}
-	return nil
 
+	db.Create(&company)
+
+	rest1.CompanyID = company.ID
+	rest2.CompanyID = company.ID
+	db.Create(rest1)
+	db.Create(rest2)
+	//company.Restaurants = []models.Restaurant{rest1, rest2}
+	//db.Clauses(clause.OnConflict{DoNothing: true}).Save(&company)
+
+	return nil
 }
 
 func FullCompany() models.Company {
