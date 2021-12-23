@@ -201,12 +201,12 @@ func LoadTestData(config *app.Configuration) error {
 	//db.Clauses(clause.OnConflict{
 	//	Columns: []clause.Column{{Name: "ID"}},
 	//DoUpdates: clause.Assignments(map[string]interface{}{"role": "user"}),
-}).Create(&company)
-//db.Create(&company)
-if db.Error != nil {
-return db.Error
-}
-return nil
+	//}).Create(&company)
+	//db.Create(&company)
+	if db.Error != nil {
+		return db.Error
+	}
+	return nil
 
 }
 
