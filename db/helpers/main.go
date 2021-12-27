@@ -4,7 +4,6 @@ import (
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type MainRepository struct {
@@ -12,20 +11,21 @@ type MainRepository struct {
 }
 
 func MigrateDB(config *app.Configuration) error {
-	//db := config.DB
 	var err error
 	//
-	//err = db.AutoMigrate(&models.Company{})
-	//err = db.AutoMigrate(&models.Restaurant{})
-	//err = db.AutoMigrate(&models.User{})
-	//err = db.AutoMigrate(&models.UserRole{})
-	//err = db.AutoMigrate(&models.Testimonial{})
-	//err = db.AutoMigrate(&models.TestimonialImage{})
-	//err = db.AutoMigrate(&models.Address{})
-	//err = db.AutoMigrate(&models.MenuImage{})
-	//err = db.AutoMigrate(&models.Menu{})
-	//err = db.AutoMigrate(&models.Role{})
-	//err = db.AutoMigrate(&models.MenuItem{})
+	db := config.DB
+	err = db.AutoMigrate(&models.Company{})
+	err = db.AutoMigrate(&models.Restaurant{})
+	err = db.AutoMigrate(&models.User{})
+	err = db.AutoMigrate(&models.UserRole{})
+	err = db.AutoMigrate(&models.Testimonial{})
+	err = db.AutoMigrate(&models.TestimonialImage{})
+	err = db.AutoMigrate(&models.RestaurantAddress{})
+	err = db.AutoMigrate(&models.UserAddress{})
+	err = db.AutoMigrate(&models.MenuImage{})
+	err = db.AutoMigrate(&models.Menu{})
+	err = db.AutoMigrate(&models.Role{})
+	err = db.AutoMigrate(&models.MenuItem{})
 
 	return err
 }
@@ -34,14 +34,14 @@ func LoadTestData(config *app.Configuration) error {
 	db := config.DB
 
 	// Create the addresses
-	addy := models.Address{
+	addy := models.RestaurantAddress{
 		Address: "123 Fake Street",
 		City:    "Dallas",
 		State:   "TX",
 		Zip:     "12345",
 		Active:  true,
 	}
-	addy2 := models.Address{
+	addy2 := models.RestaurantAddress{
 		Address: "321 Fake Street",
 		City:    "Dallas",
 		State:   "TX",
@@ -115,12 +115,12 @@ func LoadTestData(config *app.Configuration) error {
 	}
 	// Create a Restaurant
 	rest1 := models.Restaurant{
-		Addresses: []models.Address{addy},
+		Addresses: []models.RestaurantAddress{addy},
 		Menus:     []models.Menu{italianMenu},
 	}
 
 	rest2 := models.Restaurant{
-		Addresses: []models.Address{addy2},
+		Addresses: []models.RestaurantAddress{addy2},
 		Menus:     []models.Menu{americanMenu},
 	}
 
@@ -182,19 +182,20 @@ func LoadTestData(config *app.Configuration) error {
 	company := models.Company{
 		Name:        "Fake Company 1",
 		Description: "First Fake Company",
+		Restaurants: []models.Restaurant{rest1, rest2},
 	}
 
 	db.Save(&company)
 	//
-	rest1.CompanyID = company.ID
-	rest2.CompanyID = company.ID
-
-	db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "company_id"}},
-	}).Save(&rest1)
-	db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "company_id"}},
-	}).Save(&rest2)
+	//rest1.CompanyID = company.ID
+	//rest2.CompanyID = company.ID
+	//
+	//db.Clauses(clause.OnConflict{
+	//	Columns: []clause.Column{{Name: "company_id"}},
+	//}).Save(&rest1)
+	//db.Clauses(clause.OnConflict{
+	//	Columns: []clause.Column{{Name: "company_id"}},
+	//}).Save(&rest2)
 	//company.Restaurants = []models.Restaurant{rest1, rest2}
 	//db.Clauses(clause.OnConflict{DoNothing: true}).Save(&company)
 
@@ -207,7 +208,7 @@ func FullCompany() models.Company {
 		Description: "Test 1",
 		Restaurants: []models.Restaurant{
 			{
-				Addresses: []models.Address{
+				Addresses: []models.RestaurantAddress{
 					{
 						Address: "123 Fake St",
 						City:    "Dallas",

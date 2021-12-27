@@ -9,7 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"log"
 	"os"
@@ -135,6 +134,17 @@ func loadConfiguration(config *app.Configuration) {
 
 	// Setup DB connection
 	if config.Production {
+
+		//fmt.Println("Connecting to production database")
+		//
+		//db, err := gorm.
+		//	Open(mysql.Open("fcc:Password123@tcp(localhost:3306)/testing?charset=utf8mb4&parseTime=True&loc=Local"),
+		//		&gorm.Config{})
+		//if err != nil {
+		//	panic("failed to connect database")
+		//}
+		//config.DB = db
+
 		fmt.Println("Connecting to production database")
 		if db, err := gorm.Open(postgres.Open(config.DatabaseUrl), &gorm.Config{}); err != nil {
 			panic("failed to connect database")
@@ -144,14 +154,14 @@ func loadConfiguration(config *app.Configuration) {
 
 	} else {
 		fmt.Println("Connecting to non-production database")
-		if db, err := gorm.Open(sqlite.Open(config.LocalDB), &gorm.Config{
-			PrepareStmt: true,
-		}); err != nil {
-			panic("failed to connect database")
-
-		} else {
-			config.DB = db
-		}
+		//if db, err := gorm.Open(sqlite.Open(config.LocalDB), &gorm.Config{
+		//	PrepareStmt: true,
+		//}); err != nil {
+		//	panic("failed to connect database")
+		//
+		//} else {
+		//	config.DB = db
+		//}
 	}
 
 	// Setup the web app
