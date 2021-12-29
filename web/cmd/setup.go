@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"log"
 	"os"
@@ -59,7 +60,7 @@ func loadConfiguration(config *app.Configuration) {
 	}
 	// Production
 	if config.GenerateLocalData = strings.ToLower(os.Getenv("GENERATE_LOCAL_DATA")) == "true"; config.GenerateLocalData == false {
-		flag.BoolVar(&config.Production, "production", false, "Is this a production run?")
+		flag.BoolVar(&config.GenerateLocalData, "generateData", false, "Do we generate local data?")
 	}
 
 	// MaxIdle
@@ -154,14 +155,14 @@ func loadConfiguration(config *app.Configuration) {
 
 	} else {
 		fmt.Println("Connecting to non-production database")
-		//if db, err := gorm.Open(sqlite.Open(config.LocalDB), &gorm.Config{
-		//	PrepareStmt: true,
-		//}); err != nil {
-		//	panic("failed to connect database")
-		//
-		//} else {
-		//	config.DB = db
-		//}
+		if db, err := gorm.Open(sqlite.Open(config.LocalDB), &gorm.Config{
+			PrepareStmt: true,
+		}); err != nil {
+			panic("failed to connect database")
+
+		} else {
+			config.DB = db
+		}
 	}
 
 	// Setup the web app
