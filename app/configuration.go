@@ -16,7 +16,7 @@ type Configuration struct {
 	LocalDB             string
 	DatabaseUrl         string
 	GenerateTestData    bool
-	API_KEY             string
+	ApiKey              string
 	AutoMigrate         bool
 	DeleteLocalDatabase bool
 	GenerateLocalData   bool
