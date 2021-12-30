@@ -18,6 +18,48 @@ import (
 	"time"
 )
 
+func loadConfiguration(config *app.Configuration) {
+	updatePort(config)
+	updateAutoMigrate(config)
+	updateProductionSetting(config)
+	updateGenerateLocalData(config)
+	updateMaxIdle(config)
+	updateMaxOpenConnections(config)
+	updateLifetimeMinutes(config)
+	updateLocalDBSetting(config)
+	updateDatabaseURL(config)
+	updateGenerateTestData(config)
+	updateDeleteLocalDatabase(config)
+
+	// TEMP CONFIGS: these should be removed when we're actually doing real authentication
+	updateAPIKey(config)
+
+	flag.Parse()
+
+	// the port requires a colon in front of it
+	if !strings.HasPrefix(config.Port, ":") {
+		config.Port = ":" + config.Port
+	}
+
+	if err := localDBFileMaintenance(config); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := connectToDatabase(config); err != nil {
+		log.Fatal(err)
+	}
+
+	config.WebApp = fiber.New()
+
+	if !config.Production {
+		fmt.Printf("ENV full configuration: %#v\n", config)
+
+	} else {
+		fmt.Printf("ENV production: %s\n", os.Getenv("production"))
+	}
+
+}
+
 func configureMiddleware(app *fiber.App) {
 	// https://github.com/gofiber/fiber/tree/master/middleware/pprof
 	// pprof logging is underneath /debug/pprof
@@ -152,46 +194,4 @@ func connectToDatabase(config *app.Configuration) error {
 	config.DB = db
 
 	return err
-}
-
-func loadConfiguration(config *app.Configuration) {
-	updatePort(config)
-	updateAutoMigrate(config)
-	updateProductionSetting(config)
-	updateGenerateLocalData(config)
-	updateMaxIdle(config)
-	updateMaxOpenConnections(config)
-	updateLifetimeMinutes(config)
-	updateLocalDBSetting(config)
-	updateDatabaseURL(config)
-	updateGenerateTestData(config)
-	updateDeleteLocalDatabase(config)
-
-	// TEMP CONFIGS: these should be removed when we're actually doing real authentication
-	updateAPIKey(config)
-
-	flag.Parse()
-
-	// the port requires a colon in front of it
-	if !strings.HasPrefix(config.Port, ":") {
-		config.Port = ":" + config.Port
-	}
-
-	if err := localDBFileMaintenance(config); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := connectToDatabase(config); err != nil {
-		log.Fatal(err)
-	}
-
-	config.WebApp = fiber.New()
-
-	if !config.Production {
-		fmt.Printf("ENV full configuration: %#v\n", config)
-
-	} else {
-		fmt.Printf("ENV production: %s\n", os.Getenv("production"))
-	}
-
 }

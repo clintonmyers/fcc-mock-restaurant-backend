@@ -24,10 +24,10 @@ func main() {
 	}
 
 	if globalConfig.GenerateLocalData {
-		// Will generate configuration data
 		fmt.Println("Loading Test Data")
 		dbHelper.LoadTestData(&globalConfig)
 	}
+
 	// Still working on graceful shutdown.
 	// I believe this is a problem with WSL not properly registering OS signals
 	//c := make(chan os.Signal, 1) // Create signal channel
