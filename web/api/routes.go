@@ -25,7 +25,7 @@ func ApiHeaderAuth(ctx *fiber.Ctx, cfg *app.Configuration) error {
 	// This needs to be first, so we will prevent an empty string from allowing access by default
 	authToken := ctx.Get("AUTH_TOKEN", "")
 
-	if authToken == "" || authToken != cfg.API_KEY {
+	if authToken == "" || authToken != cfg.ApiKey {
 		// We're returning a 404 because we want to avoid people scanning for apis that are guarded
 		return ctx.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
 	}

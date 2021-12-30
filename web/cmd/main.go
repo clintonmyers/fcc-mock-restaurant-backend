@@ -24,12 +24,14 @@ func main() {
 	}
 
 	if globalConfig.GenerateLocalData {
-		// Will generate configuration data
 		fmt.Println("Loading Test Data")
 		dbHelper.LoadTestData(&globalConfig)
 	}
-	// Still working on graceful shutdown.
-	// I believe this is a problem with WSL not properly registering OS signals
+
+	//// Still working on graceful shutdown.
+	//// I have tried this underneath Windows and have found it runs properly.
+	//// Using GoLand and WSL this doesn't work properly
+	//
 	//c := make(chan os.Signal, 1) // Create signal channel
 	//signal.Notify(c, os.Interrupt)
 	//
