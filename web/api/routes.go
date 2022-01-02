@@ -15,31 +15,29 @@ func sayHello(c *fiber.Ctx) error {
 	return c.SendString(msg)
 }
 
-func ApiHeaderAuth(ctx *fiber.Ctx, cfg *app.Configuration) error {
-	m := ctx.Method()
-	// Only allow idempotent methods without access token
-	if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
-		return ctx.Next()
-	}
-
-	// This needs to be first, so we will prevent an empty string from allowing access by default
-	authToken := ctx.Get("AUTH_TOKEN", "")
-
-	if authToken == "" || authToken != cfg.ApiKey {
-		// We're returning a 404 because we want to avoid people scanning for apis that are guarded
-		return ctx.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
-	}
-
-	return ctx.Next()
-}
-
 func GetRoutes(app *fiber.App, config *app.Configuration) {
 	fmt.Println("Setting Routes")
 
 	app.Get("/hello/:name", sayHello)
 
 	api := app.Group("/api", logger.New())
-	api = api.Group("/current")
+	api = api.Group("/current", func(ctx *fiber.Ctx) error {
+		m := ctx.Method()
+		// Only allow idempotent methods without access token
+		if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
+			return ctx.Next()
+		}
+
+		// This needs to be first, so we will prevent an empty string from allowing access by default
+		authToken := ctx.Get("AUTH_TOKEN", "")
+
+		if authToken == "" || authToken != config.ApiKey {
+			// We're returning a 404 because we want to avoid people scanning for apis that are guarded
+			return ctx.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
+		}
+
+		return ctx.Next()
+	})
 
 	api.Get("/hello/:name", func(ctx *fiber.Ctx) error {
 		return sayHello(ctx)
@@ -48,6 +46,24 @@ func GetRoutes(app *fiber.App, config *app.Configuration) {
 	companyGrouping(api, config)
 	restaurantGrouping(api, config)
 }
+
+//func ApiHeaderAuth(ctx *fiber.Ctx, cfg *app.Configuration) error {
+//	m := ctx.Method()
+//	// Only allow idempotent methods without access token
+//	if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
+//		return ctx.Next()
+//	}
+//
+//	// This needs to be first, so we will prevent an empty string from allowing access by default
+//	authToken := ctx.Get("AUTH_TOKEN", "")
+//
+//	if authToken == "" || authToken != cfg.ApiKey {
+//		// We're returning a 404 because we want to avoid people scanning for apis that are guarded
+//		return ctx.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
+//	}
+//
+//	return ctx.Next()
+//}
 
 func companyGrouping(api fiber.Router, config *app.Configuration) {
 	api.Get("/company/:companyId", func(c *fiber.Ctx) error {

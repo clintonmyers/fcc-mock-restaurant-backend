@@ -23,7 +23,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if globalConfig.GenerateLocalData {
+	if globalConfig.GenerateTestData {
 		fmt.Println("Loading Test Data")
 		dbHelper.LoadTestData(&globalConfig)
 	}

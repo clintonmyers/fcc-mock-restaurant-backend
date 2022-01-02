@@ -22,7 +22,7 @@ func loadConfiguration(config *app.Configuration) {
 	updatePort(config)
 	updateAutoMigrate(config)
 	updateProductionSetting(config)
-	updateGenerateLocalData(config)
+	//updateGenerateLocalData(config)
 	updateMaxIdle(config)
 	updateMaxOpenConnections(config)
 	updateLifetimeMinutes(config)
@@ -84,72 +84,73 @@ func setDatabaseParameters(config *app.Configuration) {
 }
 
 func updatePort(config *app.Configuration) {
-	if config.Port = os.Getenv("PORT"); config.Port == "" {
-		flag.StringVar(&config.Port, "port", ":3030", "Port to use")
+	if config.Port = os.Getenv(app.PORT_OS); config.Port == "" {
+		flag.StringVar(&config.Port, app.PORT_FLAG, app.PORT_DEFAULT, "Port to use")
 	}
 }
 func updateAutoMigrate(config *app.Configuration) {
-	if config.AutoMigrate = strings.ToLower(os.Getenv("AUTO_MIGRATE")) == "true"; config.AutoMigrate == false {
-		flag.BoolVar(&config.AutoMigrate, "autoMigrate", true, "Should we auto migrate the database?")
+	if config.AutoMigrate = strings.ToLower(os.Getenv(app.AUTO_MIGRATE_OS)) == "true"; config.AutoMigrate == false {
+		flag.BoolVar(&config.AutoMigrate, app.AUTO_MIGRATE_FLAG, app.AUTO_MIGRATE_DEFAULT, "Should we auto migrate the database?")
 	}
 }
 
 func updateProductionSetting(config *app.Configuration) {
-	if config.Production = strings.ToLower(os.Getenv("production")) == "true"; config.Production == false {
-		flag.BoolVar(&config.Production, "production", false, "Is this a production run?")
-	}
-}
-func updateGenerateLocalData(config *app.Configuration) {
-	if config.GenerateLocalData = strings.ToLower(os.Getenv("GENERATE_LOCAL_DATA")) == "true"; config.GenerateLocalData == false {
-		flag.BoolVar(&config.GenerateLocalData, "generateData", false, "Do we generate local data?")
+	if config.Production = strings.ToLower(os.Getenv(app.PRODUCTION_OS)) == "true"; config.Production == false {
+		flag.BoolVar(&config.Production, app.PRODUCTION_FLAG, app.PRODUCTION_DEFAULT, "Is this a production run?")
 	}
 }
 
+//func updateGenerateLocalData(config *app.Configuration) {
+//	if config.GenerateLocalData = strings.ToLower(os.Getenv("GENERATE_LOCAL_DATA")) == "true"; config.GenerateLocalData == false {
+//		flag.BoolVar(&config.GenerateLocalData, "generateData", false, "Do we generate local data?")
+//	}
+//}
+
 func updateMaxIdle(config *app.Configuration) {
-	if s, err := strconv.Atoi(os.Getenv("maxIdle")); err == nil {
+	if s, err := strconv.Atoi(os.Getenv(app.MAX_IDLE_OS)); err == nil {
 		config.MaxIdle = s
 	} else {
-		flag.IntVar(&config.MaxIdle, "maxIdle", 5, "Set max idle connections for database")
+		flag.IntVar(&config.MaxIdle, app.MAX_IDLE_FLAG, app.MAX_IDLE_DEFAULT, "Set max idle connections for database")
 	}
 }
 func updateMaxOpenConnections(config *app.Configuration) {
-	if s, err := strconv.Atoi(os.Getenv("maxOpenConn")); err == nil {
+	if s, err := strconv.Atoi(os.Getenv(app.MAX_OPEN_CONN_OS)); err == nil {
 		config.MaxOpenConn = s
 	} else {
-		flag.IntVar(&config.MaxOpenConn, "maxOpenConn", 10, "Set max open connections for database")
+		flag.IntVar(&config.MaxOpenConn, app.MAX_OPEN_CONN_FLAG, app.MAX_OPEN_CONN_DEFAULT, "Set max open connections for database")
 	}
 }
 func updateLifetimeMinutes(config *app.Configuration) {
-	if s, err := strconv.Atoi(os.Getenv("lifetimeMinutes")); err == nil {
+	if s, err := strconv.Atoi(os.Getenv(app.LIFETIME_MINUTES_OS)); err == nil {
 		config.LifetimeMinutes = s
 	} else {
-		flag.IntVar(&config.LifetimeMinutes, "lifetimeMinutes", 10, "Set max open connections for database")
+		flag.IntVar(&config.LifetimeMinutes, app.LIFETIME_MINUTES_FLAG, app.LIFETIME_MINUTES_DEFAULT, "Set max open connections for database")
 	}
 }
 func updateLocalDBSetting(config *app.Configuration) {
-	if config.LocalDB = os.Getenv("localDB"); config.LocalDB == "" {
-		flag.StringVar(&config.LocalDB, "localDB", "test.db", "Local database file used only during non-production")
+	if config.LocalDB = os.Getenv(app.LOCAL_DB_OS); config.LocalDB == "" {
+		flag.StringVar(&config.LocalDB, app.LOCAL_DB_FLAG, app.LOCAL_DB_DEFAULT, "Local database file used only during non-production")
 	}
 }
 func updateDatabaseURL(config *app.Configuration) {
 	if config.DatabaseUrl = os.Getenv("DATABASE_URL"); config.DatabaseUrl == "" {
-		fmt.Println("DB URL: ", os.Getenv("DATABASE_URL"))
-		flag.StringVar(&config.DatabaseUrl, "databaseUrl", "DEFAULT", "Database URL")
+		fmt.Println("DB URL: ", os.Getenv(app.DATABASE_URL_OS))
+		flag.StringVar(&config.DatabaseUrl, app.DATABASE_URL_FLAG, app.DATABASE_URL_DEFAULT, "Database URL")
 	}
 }
 func updateGenerateTestData(config *app.Configuration) {
-	if config.GenerateTestData = strings.ToLower(os.Getenv("GENERATE_TEST_DATA")) == "true"; config.GenerateTestData == false {
-		flag.BoolVar(&config.GenerateTestData, "generateTestData", true, "Generate test data")
+	if config.GenerateTestData = strings.ToLower(os.Getenv(app.GENERATE_TEST_DATA_OS)) == "true"; config.GenerateTestData == false {
+		flag.BoolVar(&config.GenerateTestData, app.GENERATE_TEST_DATA_FLAG, app.GENERATE_TEST_DATA_DEFAULT, "Generate test data")
 	}
 }
 func updateDeleteLocalDatabase(config *app.Configuration) {
-	if config.DeleteLocalDatabase = strings.ToLower(os.Getenv("DELETE_LOCAL_DATABASE")) == "true"; config.DeleteLocalDatabase == false {
-		flag.BoolVar(&config.DeleteLocalDatabase, "deleteLocalDatabase", true, "Delete Local Database upon start")
+	if config.DeleteLocalDatabase = strings.ToLower(os.Getenv(app.DELETE_LOCAL_DB_OS)) == "true"; config.DeleteLocalDatabase == false {
+		flag.BoolVar(&config.DeleteLocalDatabase, app.DELETE_LOCAL_DB_FLAG, app.DELETE_LOCAL_DB_DEFAULT, "Delete Local Database upon start")
 	}
 }
 func updateAPIKey(config *app.Configuration) {
-	if config.ApiKey = os.Getenv("API_KEY"); config.Port == "" {
-		flag.StringVar(&config.ApiKey, "apiKey", "", "API key to use, will default to an empty string which will always deny")
+	if config.ApiKey = os.Getenv(app.API_KEY_OS); config.ApiKey == "" {
+		flag.StringVar(&config.ApiKey, app.API_KEY_FLAG, app.API_KEY_DEFAULT, "API key to use, will default to an empty string which will always deny")
 	}
 }
 
