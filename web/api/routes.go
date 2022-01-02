@@ -7,7 +7,10 @@ import (
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	jwtware "github.com/gofiber/jwt/v3"
+	"github.com/golang-jwt/jwt/v4"
 	"strconv"
+	"time"
 )
 
 func sayHello(c *fiber.Ctx) error {
@@ -15,13 +18,24 @@ func sayHello(c *fiber.Ctx) error {
 	return c.SendString(msg)
 }
 
-func GetRoutes(app *fiber.App, config *app.Configuration) {
-	fmt.Println("Setting Routes")
+func getJwtFunction(config *app.Configuration) fiber.Handler {
+	return jwtware.New(jwtware.Config{
+		SigningKey: []byte("secret"),
+		Filter: func(ctx *fiber.Ctx) bool {
+			m := ctx.Method()
+			if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
+				return true
+			}
+			return false
+		},
+	})
+}
 
-	app.Get("/hello/:name", sayHello)
+func apiKeyAuth(config *app.Configuration) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
 
-	api := app.Group("/api", logger.New())
-	api = api.Group("/current", func(ctx *fiber.Ctx) error {
+		localTest := ctx.Locals("user")
+		fmt.Println(localTest)
 		m := ctx.Method()
 		// Only allow idempotent methods without access token
 		if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
@@ -29,7 +43,7 @@ func GetRoutes(app *fiber.App, config *app.Configuration) {
 		}
 
 		// This needs to be first, so we will prevent an empty string from allowing access by default
-		authToken := ctx.Get("AUTH_TOKEN", "")
+		authToken := ctx.Get(app.API_KEY_HEADER, "")
 
 		if authToken == "" || authToken != config.ApiKey {
 			// We're returning a 404 because we want to avoid people scanning for apis that are guarded
@@ -37,33 +51,53 @@ func GetRoutes(app *fiber.App, config *app.Configuration) {
 		}
 
 		return ctx.Next()
-	})
+	}
+}
+func SetupRoutes(fiberApp *fiber.App, config *app.Configuration) {
+	fmt.Println("Setting Routes")
 
-	api.Get("/hello/:name", func(ctx *fiber.Ctx) error {
-		return sayHello(ctx)
-	})
+	fiberApp.Get("/hello/:name", sayHello)
 
-	companyGrouping(api, config)
-	restaurantGrouping(api, config)
+	fiberApp.Post("/login", login)
+
+	api := fiberApp.Group("/api", logger.New(), getJwtFunction(config))
+
+	{
+		api = api.Group("/current", apiKeyAuth(config))
+		api.Get("/hello/:name", sayHello)
+		companyGrouping(api, config)
+		restaurantGrouping(api, config)
+	}
+
 }
 
-//func ApiHeaderAuth(ctx *fiber.Ctx, cfg *app.Configuration) error {
-//	m := ctx.Method()
-//	// Only allow idempotent methods without access token
-//	if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
-//		return ctx.Next()
-//	}
-//
-//	// This needs to be first, so we will prevent an empty string from allowing access by default
-//	authToken := ctx.Get("AUTH_TOKEN", "")
-//
-//	if authToken == "" || authToken != cfg.ApiKey {
-//		// We're returning a 404 because we want to avoid people scanning for apis that are guarded
-//		return ctx.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
-//	}
-//
-//	return ctx.Next()
-//}
+func login(c *fiber.Ctx) error {
+	user := c.FormValue("user")
+	pass := c.FormValue("pass")
+
+	// Throws Unauthorized error
+	if user != "john" || pass != "doe" {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	// Create the Claims
+	claims := jwt.MapClaims{
+		"name":  "John Doe",
+		"admin": true,
+		"exp":   time.Now().Add(time.Hour * 72).Unix(),
+	}
+
+	// Create token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Generate encoded token and send it as response.
+	t, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	return c.JSON(fiber.Map{"token": t})
+}
 
 func companyGrouping(api fiber.Router, config *app.Configuration) {
 	api.Get("/company/:companyId", func(c *fiber.Ctx) error {

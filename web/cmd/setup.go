@@ -29,7 +29,8 @@ func loadConfiguration(config *app.Configuration) {
 	updateDatabaseURL(config)
 	updateGenerateTestData(config)
 	updateDeleteLocalDatabase(config)
-
+	updateGoogleOAuthSettings(config)
+	updateSimulateOauth(config)
 	// TEMP CONFIGS: these should be removed when we're actually doing real authentication
 	updateAPIKey(config)
 
@@ -139,6 +140,24 @@ func updateGenerateTestData(config *app.Configuration) {
 func updateDeleteLocalDatabase(config *app.Configuration) {
 	if config.DeleteLocalDatabase = strings.ToLower(os.Getenv(app.DELETE_LOCAL_DB_OS)) == "true"; config.DeleteLocalDatabase == false {
 		flag.BoolVar(&config.DeleteLocalDatabase, app.DELETE_LOCAL_DB_FLAG, app.DELETE_LOCAL_DB_DEFAULT, "Delete Local Database upon start")
+	}
+}
+
+func updateGoogleOAuthSettings(config *app.Configuration) {
+	// For Google OAuth we need to setup the keys and the secret as well as a callback URL for this to return to
+	if config.GoogleOAuthKey = strings.ToLower(os.Getenv(app.GOOGLE_AUTH_KEY_OS)); config.GoogleOAuthKey == "" {
+		flag.StringVar(&config.GoogleOAuthKey, app.GOOGLE_AUTH_KEY_FLAG, app.GOOGLE_AUTH_DEFAULT, "Used to set the Google OAuth key")
+	}
+	if config.GoogleOAuthSecret = strings.ToLower(os.Getenv(app.GOOGLE_SECRET_KEY_OS)); config.GoogleOAuthSecret == "" {
+		flag.StringVar(&config.GoogleOAuthSecret, app.GOOGLE_SECRET_KEY_FLAG, app.GOOGLE_SECRET_DEFAULT, "Used to set the Google OAuth Secret")
+	}
+	if config.CallbackUrl = strings.ToLower(os.Getenv(app.CALLBACK_URL_OS)); config.CallbackUrl == "" {
+		flag.StringVar(&config.CallbackUrl, app.CALLBACK_URL_FLAG, app.CALLBACK_DEFAULT, "Used to set the Google OAuth callback")
+	}
+}
+func updateSimulateOauth(config *app.Configuration) {
+	if config.SimulateOAuth = strings.ToLower(os.Getenv(app.SIMULATE_OAUTH_OS)) == "true"; config.DeleteLocalDatabase == false {
+		flag.BoolVar(&config.SimulateOAuth, app.SIMULATE_OAUTH_FLAG, app.SIMULATE_OAUTH_DEFAULT, "Should we simulate Oauth with a /login/:username/:role/:restaurantId")
 	}
 }
 func updateAPIKey(config *app.Configuration) {

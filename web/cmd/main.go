@@ -16,7 +16,7 @@ func main() {
 
 	setDatabaseParameters(&globalConfig)
 	configureMiddleware(globalConfig.WebApp)
-	api.GetRoutes(globalConfig.WebApp, &globalConfig)
+	api.SetupRoutes(globalConfig.WebApp, &globalConfig)
 
 	err := dbHelper.MigrateDB(&globalConfig)
 	if err != nil {

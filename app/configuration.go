@@ -19,12 +19,17 @@ type Configuration struct {
 	ApiKey              string
 	AutoMigrate         bool
 	DeleteLocalDatabase bool
+	GoogleOAuthKey      string
+	GoogleOAuthSecret   string
+	CallbackUrl         string
+	SimulateOAuth       bool
 }
 
 const (
 	API_KEY_OS      string = "API_KEY"
 	API_KEY_FLAG    string = "apiKey"
 	API_KEY_DEFAULT string = ""
+	API_KEY_HEADER  string = "API_KEY"
 
 	DELETE_LOCAL_DB_OS      string = "DELETE_LOCAL_DATABASE"
 	DELETE_LOCAL_DB_FLAG    string = "deleteLocalDatabase"
@@ -65,4 +70,20 @@ const (
 	PORT_OS      string = "PORT"
 	PORT_FLAG    string = "port"
 	PORT_DEFAULT string = ":3030"
+
+	GOOGLE_AUTH_KEY_OS   string = "GOOGLE_AUTH_KEY"
+	GOOGLE_AUTH_KEY_FLAG string = "googleAuthKey"
+	GOOGLE_AUTH_DEFAULT  string = ""
+
+	GOOGLE_SECRET_KEY_OS   string = "GOOGLE_SECRET_KEY"
+	GOOGLE_SECRET_KEY_FLAG string = "googleSecretKey"
+	GOOGLE_SECRET_DEFAULT  string = ""
+
+	CALLBACK_URL_OS   string = "REDIRECT_URL"
+	CALLBACK_URL_FLAG string = "redirectUrl"
+	CALLBACK_DEFAULT  string = "http://127.0.0.1:3030/auth/google/callback"
+
+	SIMULATE_OAUTH_OS      string = "SIMULATE_OAUTH"
+	SIMULATE_OAUTH_FLAG    string = "simulateOauth"
+	SIMULATE_OAUTH_DEFAULT bool   = false
 )
