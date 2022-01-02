@@ -19,7 +19,6 @@ type Configuration struct {
 	ApiKey              string
 	AutoMigrate         bool
 	DeleteLocalDatabase bool
-	//GenerateLocalData   bool
 }
 
 const (
