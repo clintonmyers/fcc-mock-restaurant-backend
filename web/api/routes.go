@@ -20,7 +20,7 @@ func sayHello(c *fiber.Ctx) error {
 
 func getJwtFunction(config *app.Configuration) fiber.Handler {
 	return jwtware.New(jwtware.Config{
-		SigningKey: []byte("secret"),
+		SigningKey: []byte(config.OAuthSecret),
 		Filter: func(ctx *fiber.Ctx) bool {
 			m := ctx.Method()
 			if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
@@ -58,7 +58,9 @@ func SetupRoutes(fiberApp *fiber.App, config *app.Configuration) {
 
 	fiberApp.Get("/hello/:name", sayHello)
 
-	fiberApp.Post("/login", login)
+	if config.SimulateOAuth {
+		fiberApp.Post("/login", simulatedLogin(config))
+	}
 
 	api := fiberApp.Group("/api", logger.New(), getJwtFunction(config))
 
@@ -71,32 +73,34 @@ func SetupRoutes(fiberApp *fiber.App, config *app.Configuration) {
 
 }
 
-func login(c *fiber.Ctx) error {
-	user := c.FormValue("user")
-	pass := c.FormValue("pass")
+func simulatedLogin(config *app.Configuration) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user := c.FormValue("user")
+		pass := c.FormValue("pass")
 
-	// Throws Unauthorized error
-	if user != "john" || pass != "doe" {
-		return c.SendStatus(fiber.StatusUnauthorized)
+		// Throws Unauthorized error
+		if user != config.SimulatedUser || pass != config.SimulatedPassword {
+			return c.SendStatus(fiber.StatusUnauthorized)
+		}
+
+		// Create the Claims
+		claims := jwt.MapClaims{
+			"name":  "John Doe",
+			"admin": true,
+			"exp":   time.Now().Add(time.Hour * 72).Unix(),
+		}
+
+		// Create token
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+		// Generate encoded token and send it as response.
+		t, err := token.SignedString([]byte(config.OAuthSecret))
+		if err != nil {
+			return c.SendStatus(fiber.StatusInternalServerError)
+		}
+
+		return c.JSON(fiber.Map{"token": t})
 	}
-
-	// Create the Claims
-	claims := jwt.MapClaims{
-		"name":  "John Doe",
-		"admin": true,
-		"exp":   time.Now().Add(time.Hour * 72).Unix(),
-	}
-
-	// Create token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte("secret"))
-	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	return c.JSON(fiber.Map{"token": t})
 }
 
 func companyGrouping(api fiber.Router, config *app.Configuration) {

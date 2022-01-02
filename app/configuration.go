@@ -23,6 +23,9 @@ type Configuration struct {
 	GoogleOAuthSecret   string
 	CallbackUrl         string
 	SimulateOAuth       bool
+	SimulatedUser       string
+	SimulatedPassword   string
+	OAuthSecret         string
 }
 
 const (
@@ -86,4 +89,16 @@ const (
 	SIMULATE_OAUTH_OS      string = "SIMULATE_OAUTH"
 	SIMULATE_OAUTH_FLAG    string = "simulateOauth"
 	SIMULATE_OAUTH_DEFAULT bool   = false
+
+	SIMULATED_USER_OS      string = "SIMULATED_USER"
+	SIMULATED_USER_FLAG    string = "simulatedUser"
+	SIMULATED_USER_DEFAULT string = ""
+
+	SIMULATED_PASSWORD_OS      string = "SIMULATED_PASSWORD"
+	SIMULATED_PASSWORD_FLAG    string = "simulatedPassword"
+	SIMULATED_PASSWORD_DEFAULT string = ""
+
+	OAUTH_SECRET_OS      string = "OAUTH_SECRET"
+	OAUTH_SECRET_FLAG    string = "oauthSecret"
+	OAUTH_SECRET_DEFAULT string = ""
 )

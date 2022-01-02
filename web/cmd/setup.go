@@ -31,11 +31,15 @@ func loadConfiguration(config *app.Configuration) {
 	updateDeleteLocalDatabase(config)
 	updateGoogleOAuthSettings(config)
 	updateSimulateOauth(config)
+	updateOAuthSecret(config)
 	// TEMP CONFIGS: these should be removed when we're actually doing real authentication
 	updateAPIKey(config)
 
 	flag.Parse()
 
+	if err := validateConfiguration(config); err != nil {
+		log.Fatal(err)
+	}
 	// the port requires a colon in front of it
 	if !strings.HasPrefix(config.Port, ":") {
 		config.Port = ":" + config.Port
@@ -78,9 +82,22 @@ func setDatabaseParameters(config *app.Configuration) {
 		sqlDb.SetMaxIdleConns(config.MaxIdle)
 		sqlDb.SetMaxOpenConns(config.MaxOpenConn)
 		sqlDb.SetConnMaxLifetime(time.Minute * time.Duration(config.LifetimeMinutes))
+
 	} else {
 		log.Fatal(err)
 	}
+}
+
+func validateConfiguration(config *app.Configuration) error {
+	if config.OAuthSecret == "" {
+		return errors.New("Cannot have an empty secret")
+	}
+
+	if config.SimulateOAuth && (config.SimulatedUser == "" || config.SimulatedPassword == "") {
+		return errors.New("Cannot have simulated OAuth annd empty username/password")
+	}
+
+	return nil
 }
 
 func updatePort(config *app.Configuration) {
@@ -157,12 +174,24 @@ func updateGoogleOAuthSettings(config *app.Configuration) {
 }
 func updateSimulateOauth(config *app.Configuration) {
 	if config.SimulateOAuth = strings.ToLower(os.Getenv(app.SIMULATE_OAUTH_OS)) == "true"; config.DeleteLocalDatabase == false {
-		flag.BoolVar(&config.SimulateOAuth, app.SIMULATE_OAUTH_FLAG, app.SIMULATE_OAUTH_DEFAULT, "Should we simulate Oauth with a /login/:username/:role/:restaurantId")
+		flag.BoolVar(&config.SimulateOAuth, app.SIMULATE_OAUTH_FLAG, app.SIMULATE_OAUTH_DEFAULT, "Should we simulate Oauth with a /login/")
+	}
+	if config.SimulatedUser = strings.ToLower(os.Getenv(app.SIMULATED_USER_OS)); config.SimulatedUser == "" {
+		flag.StringVar(&config.SimulatedUser, app.SIMULATED_USER_FLAG, app.SIMULATED_USER_DEFAULT, "Simulated User")
+	}
+	if config.SimulatedPassword = strings.ToLower(os.Getenv(app.SIMULATED_PASSWORD_OS)); config.SimulatedPassword == "" {
+		flag.StringVar(&config.SimulatedPassword, app.SIMULATED_PASSWORD_FLAG, app.SIMULATED_USER_DEFAULT, "Simulated Password")
 	}
 }
 func updateAPIKey(config *app.Configuration) {
 	if config.ApiKey = os.Getenv(app.API_KEY_OS); config.ApiKey == "" {
 		flag.StringVar(&config.ApiKey, app.API_KEY_FLAG, app.API_KEY_DEFAULT, "API key to use, will default to an empty string which will always deny")
+	}
+}
+
+func updateOAuthSecret(config *app.Configuration) {
+	if config.OAuthSecret = os.Getenv(app.OAUTH_SECRET_OS); config.OAuthSecret == "" {
+		flag.StringVar(&config.OAuthSecret, app.OAUTH_SECRET_FLAG, app.OAUTH_SECRET_DEFAULT, "API key to use, will default to an empty string which will always deny")
 	}
 }
 
