@@ -22,7 +22,6 @@ func loadConfiguration(config *app.Configuration) {
 	updatePort(config)
 	updateAutoMigrate(config)
 	updateProductionSetting(config)
-	//updateGenerateLocalData(config)
 	updateMaxIdle(config)
 	updateMaxOpenConnections(config)
 	updateLifetimeMinutes(config)
@@ -99,12 +98,6 @@ func updateProductionSetting(config *app.Configuration) {
 		flag.BoolVar(&config.Production, app.PRODUCTION_FLAG, app.PRODUCTION_DEFAULT, "Is this a production run?")
 	}
 }
-
-//func updateGenerateLocalData(config *app.Configuration) {
-//	if config.GenerateLocalData = strings.ToLower(os.Getenv("GENERATE_LOCAL_DATA")) == "true"; config.GenerateLocalData == false {
-//		flag.BoolVar(&config.GenerateLocalData, "generateData", false, "Do we generate local data?")
-//	}
-//}
 
 func updateMaxIdle(config *app.Configuration) {
 	if s, err := strconv.Atoi(os.Getenv(app.MAX_IDLE_OS)); err == nil {
