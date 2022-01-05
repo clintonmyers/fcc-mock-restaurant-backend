@@ -2,12 +2,14 @@ package app
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"gorm.io/gorm"
 )
 
 type Configuration struct {
 	DB                  *gorm.DB
 	WebApp              *fiber.App
+	Store               *session.Store
 	MaxIdle             int
 	MaxOpenConn         int
 	LifetimeMinutes     int
@@ -26,6 +28,8 @@ type Configuration struct {
 	SimulatedUser       string
 	SimulatedPassword   string
 	OAuthSecret         string
+	SessionLocation     string
+	SessionName         string
 }
 
 const (
@@ -101,4 +105,12 @@ const (
 	OAUTH_SECRET_OS      string = "OAUTH_SECRET"
 	OAUTH_SECRET_FLAG    string = "oauthSecret"
 	OAUTH_SECRET_DEFAULT string = ""
+
+	SESSION_LOCATION_OS      string = "SESSION_LOCATION"
+	SESSION_LOCATION_FLAG    string = "sessionLocation"
+	SESSION_LOCATION_DEFAULT string = "header"
+
+	SESSION_NAME_OS      string = "SESSION_NAME"
+	SESSION_NAME_FLAG    string = "sessionName"
+	SESSION_NAME_DEFAULT string = "session_id"
 )

@@ -58,11 +58,16 @@ func SetupRoutes(fiberApp *fiber.App, config *app.Configuration) {
 
 	fiberApp.Get("/hello/:name", sayHello)
 
+	fiberApp.Use(logger.New())
 	if config.SimulateOAuth {
 		fiberApp.Post("/login", simulatedLogin(config))
+	} else {
+		fiberApp.Get("/login", func(c *fiber.Ctx) error {
+			return c.Redirect("/login/google", fiber.StatusTemporaryRedirect)
+		})
 	}
 
-	api := fiberApp.Group("/api", logger.New(), getJwtFunction(config))
+	api := fiberApp.Group("/api", getJwtFunction(config))
 
 	{
 		api = api.Group("/current", apiKeyAuth(config))
@@ -85,7 +90,7 @@ func simulatedLogin(config *app.Configuration) fiber.Handler {
 
 		// Create the Claims
 		claims := jwt.MapClaims{
-			"name":  "John Doe",
+			"name":  config.SimulatedUser,
 			"admin": true,
 			"exp":   time.Now().Add(time.Hour * 72).Unix(),
 		}
@@ -94,12 +99,16 @@ func simulatedLogin(config *app.Configuration) fiber.Handler {
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 		// Generate encoded token and send it as response.
-		t, err := token.SignedString([]byte(config.OAuthSecret))
-		if err != nil {
+		if t, err := token.SignedString([]byte(config.OAuthSecret)); err != nil {
 			return c.SendStatus(fiber.StatusInternalServerError)
+		} else {
+			return c.JSON(fiber.Map{"token": t})
 		}
-
-		return c.JSON(fiber.Map{"token": t})
+		//if err != nil {
+		//	return c.SendStatus(fiber.StatusInternalServerError)
+		//}
+		//
+		//return c.JSON(fiber.Map{"token": t})
 	}
 }
 

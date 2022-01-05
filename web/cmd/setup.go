@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -32,10 +33,15 @@ func loadConfiguration(config *app.Configuration) {
 	updateGoogleOAuthSettings(config)
 	updateSimulateOauth(config)
 	updateOAuthSecret(config)
-	// TEMP CONFIGS: these should be removed when we're actually doing real authentication
+	updateSessionConfigs(config)
+
+	// <TEMP CONFIGS>: these should be removed when we're actually doing real authentication
 	updateAPIKey(config)
+	// </TEMP CONFIGS>
 
 	flag.Parse()
+
+	createSessionStore(config)
 
 	if err := validateConfiguration(config); err != nil {
 		log.Fatal(err)
@@ -180,7 +186,7 @@ func updateSimulateOauth(config *app.Configuration) {
 		flag.StringVar(&config.SimulatedUser, app.SIMULATED_USER_FLAG, app.SIMULATED_USER_DEFAULT, "Simulated User")
 	}
 	if config.SimulatedPassword = strings.ToLower(os.Getenv(app.SIMULATED_PASSWORD_OS)); config.SimulatedPassword == "" {
-		flag.StringVar(&config.SimulatedPassword, app.SIMULATED_PASSWORD_FLAG, app.SIMULATED_USER_DEFAULT, "Simulated Password")
+		flag.StringVar(&config.SimulatedPassword, app.SIMULATED_PASSWORD_FLAG, app.SIMULATED_PASSWORD_DEFAULT, "Simulated Password")
 	}
 }
 func updateAPIKey(config *app.Configuration) {
@@ -195,6 +201,20 @@ func updateOAuthSecret(config *app.Configuration) {
 	}
 }
 
+func updateSessionConfigs(config *app.Configuration) {
+	if config.SessionLocation = os.Getenv(app.SESSION_LOCATION_OS); config.SessionLocation == "" {
+		flag.StringVar(&config.SessionLocation, app.SESSION_LOCATION_FLAG, app.SESSION_LOCATION_DEFAULT, "session location [header/cookie]")
+	}
+	if config.SessionName = os.Getenv(app.SESSION_NAME_OS); config.SessionName == "" {
+		flag.StringVar(&config.SessionName, app.SESSION_NAME_FLAG, app.SESSION_NAME_DEFAULT, "session name cookie:session_id")
+	}
+}
+
+func createSessionStore(config *app.Configuration) {
+	config.Store = session.New(session.Config{
+		KeyLookup: fmt.Sprintf("%s:%s", config.SessionLocation, config.SessionName),
+	})
+}
 func localDBFileMaintenance(config *app.Configuration) error {
 	if config.Production == false && config.DeleteLocalDatabase {
 		localDatabaseName := "./" + config.LocalDB
