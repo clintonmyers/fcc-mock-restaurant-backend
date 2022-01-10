@@ -7,8 +7,11 @@ import (
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/providers/google"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -42,7 +45,7 @@ func loadConfiguration(config *app.Configuration) {
 	flag.Parse()
 
 	createSessionStore(config)
-
+	configureOauth(config)
 	if err := validateConfiguration(config); err != nil {
 		log.Fatal(err)
 	}
@@ -79,6 +82,7 @@ func configureMiddleware(app *fiber.App) {
 	// The default already has '*' as the allowed origins
 	app.Use(cors.New())
 
+	app.Use(logger.New())
 }
 
 func setDatabaseParameters(config *app.Configuration) {
@@ -100,7 +104,7 @@ func validateConfiguration(config *app.Configuration) error {
 	}
 
 	if config.SimulateOAuth && (config.SimulatedUser == "" || config.SimulatedPassword == "") {
-		return errors.New("Cannot have simulated OAuth annd empty username/password")
+		return errors.New("Cannot have simulated OAuth and empty username/password")
 	}
 
 	return nil
@@ -168,13 +172,13 @@ func updateDeleteLocalDatabase(config *app.Configuration) {
 
 func updateGoogleOAuthSettings(config *app.Configuration) {
 	// For Google OAuth we need to setup the keys and the secret as well as a callback URL for this to return to
-	if config.GoogleOAuthKey = strings.ToLower(os.Getenv(app.GOOGLE_AUTH_KEY_OS)); config.GoogleOAuthKey == "" {
+	if config.GoogleOAuthKey = os.Getenv(app.GOOGLE_AUTH_KEY_OS); config.GoogleOAuthKey == "" {
 		flag.StringVar(&config.GoogleOAuthKey, app.GOOGLE_AUTH_KEY_FLAG, app.GOOGLE_AUTH_DEFAULT, "Used to set the Google OAuth key")
 	}
-	if config.GoogleOAuthSecret = strings.ToLower(os.Getenv(app.GOOGLE_SECRET_KEY_OS)); config.GoogleOAuthSecret == "" {
+	if config.GoogleOAuthSecret = os.Getenv(app.GOOGLE_SECRET_KEY_OS); config.GoogleOAuthSecret == "" {
 		flag.StringVar(&config.GoogleOAuthSecret, app.GOOGLE_SECRET_KEY_FLAG, app.GOOGLE_SECRET_DEFAULT, "Used to set the Google OAuth Secret")
 	}
-	if config.CallbackUrl = strings.ToLower(os.Getenv(app.CALLBACK_URL_OS)); config.CallbackUrl == "" {
+	if config.CallbackUrl = os.Getenv(app.CALLBACK_URL_OS); config.CallbackUrl == "" {
 		flag.StringVar(&config.CallbackUrl, app.CALLBACK_URL_FLAG, app.CALLBACK_DEFAULT, "Used to set the Google OAuth callback")
 	}
 }
@@ -182,10 +186,10 @@ func updateSimulateOauth(config *app.Configuration) {
 	if config.SimulateOAuth = strings.ToLower(os.Getenv(app.SIMULATE_OAUTH_OS)) == "true"; config.DeleteLocalDatabase == false {
 		flag.BoolVar(&config.SimulateOAuth, app.SIMULATE_OAUTH_FLAG, app.SIMULATE_OAUTH_DEFAULT, "Should we simulate Oauth with a /login/")
 	}
-	if config.SimulatedUser = strings.ToLower(os.Getenv(app.SIMULATED_USER_OS)); config.SimulatedUser == "" {
+	if config.SimulatedUser = os.Getenv(app.SIMULATED_USER_OS); config.SimulatedUser == "" {
 		flag.StringVar(&config.SimulatedUser, app.SIMULATED_USER_FLAG, app.SIMULATED_USER_DEFAULT, "Simulated User")
 	}
-	if config.SimulatedPassword = strings.ToLower(os.Getenv(app.SIMULATED_PASSWORD_OS)); config.SimulatedPassword == "" {
+	if config.SimulatedPassword = os.Getenv(app.SIMULATED_PASSWORD_OS); config.SimulatedPassword == "" {
 		flag.StringVar(&config.SimulatedPassword, app.SIMULATED_PASSWORD_FLAG, app.SIMULATED_PASSWORD_DEFAULT, "Simulated Password")
 	}
 }
@@ -203,7 +207,7 @@ func updateOAuthSecret(config *app.Configuration) {
 
 func updateSessionConfigs(config *app.Configuration) {
 	if config.SessionLocation = os.Getenv(app.SESSION_LOCATION_OS); config.SessionLocation == "" {
-		flag.StringVar(&config.SessionLocation, app.SESSION_LOCATION_FLAG, app.SESSION_LOCATION_DEFAULT, "session location [header/cookie]")
+		flag.StringVar(&config.SessionLocation, app.SESSION_LOCATION_FLAG, app.SESSION_LOCATION_DEFAULT, "session location [header/cookie/query]")
 	}
 	if config.SessionName = os.Getenv(app.SESSION_NAME_OS); config.SessionName == "" {
 		flag.StringVar(&config.SessionName, app.SESSION_NAME_FLAG, app.SESSION_NAME_DEFAULT, "session name cookie:session_id")
@@ -211,9 +215,16 @@ func updateSessionConfigs(config *app.Configuration) {
 }
 
 func createSessionStore(config *app.Configuration) {
+	location := fmt.Sprintf("%s:%s", config.SessionLocation, config.SessionName)
 	config.Store = session.New(session.Config{
-		KeyLookup: fmt.Sprintf("%s:%s", config.SessionLocation, config.SessionName),
+		KeyLookup: location,
 	})
+}
+
+func configureOauth(config *app.Configuration) {
+	goth.UseProviders(
+		google.New(config.GoogleOAuthKey, config.GoogleOAuthSecret, config.CallbackUrl),
+	)
 }
 func localDBFileMaintenance(config *app.Configuration) error {
 	if config.Production == false && config.DeleteLocalDatabase {

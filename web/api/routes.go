@@ -6,9 +6,10 @@ import (
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/db/helpers"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/shareed2k/goth_fiber"
+	"log"
 	"strconv"
 	"time"
 )
@@ -56,16 +57,30 @@ func apiKeyAuth(config *app.Configuration) fiber.Handler {
 func SetupRoutes(fiberApp *fiber.App, config *app.Configuration) {
 	fmt.Println("Setting Routes")
 
-	fiberApp.Get("/hello/:name", sayHello)
+	fiberApp.Get("/", func(c *fiber.Ctx) error {
+		store, err := config.Store.Get(c)
+		if err != nil {
+			return c.SendString(err.Error())
+		}
+		user := store.Get("user")
+		return c.JSON(user)
 
-	fiberApp.Use(logger.New())
-	if config.SimulateOAuth {
-		fiberApp.Post("/login", simulatedLogin(config))
-	} else {
-		fiberApp.Get("/login", func(c *fiber.Ctx) error {
-			return c.Redirect("/login/google", fiber.StatusTemporaryRedirect)
-		})
-	}
+	})
+	fiberApp.Get("/hello/:name", func(c *fiber.Ctx) error {
+		fmt.Println("HELLO")
+		sess, err := config.Store.Get(c)
+		if err != nil {
+			fmt.Println(err)
+			return c.SendString(err.Error())
+		}
+		defer sess.Save()
+		sess.Set("test", "TESTING")
+
+		return c.SendString("TESTING OUTPUT")
+
+	})
+
+	setupOAuth(fiberApp, config)
 
 	api := fiberApp.Group("/api", getJwtFunction(config))
 
@@ -78,6 +93,34 @@ func SetupRoutes(fiberApp *fiber.App, config *app.Configuration) {
 
 }
 
+func setupOAuth(fiberApp *fiber.App, config *app.Configuration) {
+	if config.SimulateOAuth {
+		fiberApp.Post("/login", simulatedLogin(config))
+	} else {
+		fiberApp.Get("/login", func(c *fiber.Ctx) error {
+			c.Set("provider", "google")
+			return c.Redirect("/login/google", fiber.StatusTemporaryRedirect)
+		})
+	}
+	fiberApp.Get("/login/:provider", goth_fiber.BeginAuthHandler)
+
+	fiberApp.Get("/auth/:provider/callback", func(ctx *fiber.Ctx) error {
+		user, err := goth_fiber.CompleteUserAuth(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		store, err := config.Store.Get(ctx)
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer store.Save()
+		store.Set("user", user)
+
+		return ctx.SendString(user.Email)
+
+	})
+}
 func simulatedLogin(config *app.Configuration) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user := c.FormValue("user")
@@ -104,11 +147,6 @@ func simulatedLogin(config *app.Configuration) fiber.Handler {
 		} else {
 			return c.JSON(fiber.Map{"token": t})
 		}
-		//if err != nil {
-		//	return c.SendStatus(fiber.StatusInternalServerError)
-		//}
-		//
-		//return c.JSON(fiber.Map{"token": t})
 	}
 }
 

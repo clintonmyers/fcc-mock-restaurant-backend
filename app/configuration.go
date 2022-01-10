@@ -88,7 +88,7 @@ const (
 
 	CALLBACK_URL_OS   string = "REDIRECT_URL"
 	CALLBACK_URL_FLAG string = "redirectUrl"
-	CALLBACK_DEFAULT  string = "http://127.0.0.1:3030/auth/google/callback"
+	CALLBACK_DEFAULT  string = "http://127.0.0.1:8088/auth/google/callback"
 
 	SIMULATE_OAUTH_OS      string = "SIMULATE_OAUTH"
 	SIMULATE_OAUTH_FLAG    string = "simulateOauth"
