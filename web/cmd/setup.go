@@ -37,7 +37,7 @@ func loadConfiguration(config *app.Configuration) {
 	updateSimulateOauth(config)
 	updateOAuthSecret(config)
 	updateSessionConfigs(config)
-
+	updateRedirect(config)
 	// <TEMP CONFIGS>: these should be removed when we're actually doing real authentication
 	updateAPIKey(config)
 	// </TEMP CONFIGS>
@@ -104,9 +104,11 @@ func validateConfiguration(config *app.Configuration) error {
 	}
 
 	if config.SimulateOAuth && (config.SimulatedUser == "" || config.SimulatedPassword == "") {
-		return errors.New("Cannot have simulated OAuth and empty username/password")
+		return errors.New("cannot have simulated OAuth and empty username/password")
 	}
-
+	if config.AuthRedirect == "" {
+		return errors.New("cannot have an unknown redirect after authentication")
+	}
 	return nil
 }
 
@@ -211,6 +213,12 @@ func updateSessionConfigs(config *app.Configuration) {
 	}
 	if config.SessionName = os.Getenv(app.SESSION_NAME_OS); config.SessionName == "" {
 		flag.StringVar(&config.SessionName, app.SESSION_NAME_FLAG, app.SESSION_NAME_DEFAULT, "session name cookie:session_id")
+	}
+}
+
+func updateRedirect(config *app.Configuration) {
+	if config.AuthRedirect = os.Getenv(app.AUTH_REDIRECT_OS); config.AuthRedirect == "" {
+		flag.StringVar(&config.AuthRedirect, app.AUTH_REDIRECT_FLAG, app.AUTH_REDIRECT_DEFAULT, "default redirect URL after authentication")
 	}
 }
 

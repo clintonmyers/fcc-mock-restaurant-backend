@@ -9,7 +9,6 @@ import (
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/shareed2k/goth_fiber"
-	"log"
 	"strconv"
 	"time"
 )
@@ -63,6 +62,7 @@ func SetupRoutes(fiberApp *fiber.App, config *app.Configuration) {
 			return c.SendString(err.Error())
 		}
 		user := store.Get("user")
+		fmt.Println(c.Cookies("testName", "??"))
 		return c.JSON(user)
 
 	})
@@ -87,6 +87,15 @@ func SetupRoutes(fiberApp *fiber.App, config *app.Configuration) {
 	{
 		api = api.Group("/current", apiKeyAuth(config))
 		api.Get("/hello/:name", sayHello)
+
+		// TODO
+		// This needs to use a map and pull up an existing jwt token that was generated earlier
+		// We should create this jwt after the login and then prune the list ever so often.
+
+		api.Post("/getJwt", func(c *fiber.Ctx) error {
+
+			return c.SendStatus(fiber.StatusOK)
+		})
 		companyGrouping(api, config)
 		restaurantGrouping(api, config)
 	}
@@ -99,6 +108,14 @@ func setupOAuth(fiberApp *fiber.App, config *app.Configuration) {
 	} else {
 		fiberApp.Get("/login", func(c *fiber.Ctx) error {
 			c.Set("provider", "google")
+
+			//if ref := c.Query("redirect", ""); ref != "" {
+			//	if store, err := config.Store.Get(c); err == nil {
+			//		store.Set("ref", ref)
+			//		defer store.Save()
+			//	}
+			//}
+
 			return c.Redirect("/login/google", fiber.StatusTemporaryRedirect)
 		})
 	}
@@ -107,18 +124,45 @@ func setupOAuth(fiberApp *fiber.App, config *app.Configuration) {
 	fiberApp.Get("/auth/:provider/callback", func(ctx *fiber.Ctx) error {
 		user, err := goth_fiber.CompleteUserAuth(ctx)
 		if err != nil {
-			log.Fatal(err)
+			//log.Fatal(err)
+			fmt.Println(err)
 		}
-
 		store, err := config.Store.Get(ctx)
 		if err != nil {
 			fmt.Println(err)
 		}
+		//// // // // // // // //
+		//fmt.Println("ref: ", store.Get("ref"))
+		//
+		//// // // // // // // //
+
 		defer store.Save()
 		store.Set("user", user)
+		ctx.Cookie(&fiber.Cookie{Name: "testName", Value: "testValue"})
+		//return ctx.SendString(user.Email)
+		// Here we can return the reponse in the headers so they can pull them out and use them
+		//ctx.Response().Header.Set("jwtjwt", "abcaslkfjl;kajsdf.asdflkjlkasdf.;lkjasdflkjasdlfkjal;skdjflkajsdfl.asfdasfasfd")
+		//ctx.Response().SetBody([]byte("jwt=abcaslkfjl"))
 
-		return ctx.SendString(user.Email)
+		claims := jwt.MapClaims{
+			"name":  "John Doe",
+			"admin": true,
+			"exp":   time.Now().Add(time.Hour * 72).Unix(),
+		}
 
+		// Create token
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+		// Generate encoded token and send it as response.
+		t, err := token.SignedString([]byte(config.OAuthSecret))
+		//if err != nil {
+		//	return c.SendStatus(fiber.StatusInternalServerError)
+		//}
+		if err != nil {
+			fmt.Println(err)
+		}
+		//return ctx.Redirect(config.AuthRedirect+"?jwt="+t, fiber.StatusTemporaryRedirect)
+		return ctx.JSON(t)
 	})
 }
 func simulatedLogin(config *app.Configuration) fiber.Handler {

@@ -30,6 +30,7 @@ type Configuration struct {
 	OAuthSecret         string
 	SessionLocation     string
 	SessionName         string
+	AuthRedirect        string
 }
 
 const (
@@ -113,4 +114,9 @@ const (
 	SESSION_NAME_OS      string = "SESSION_NAME"
 	SESSION_NAME_FLAG    string = "sessionName"
 	SESSION_NAME_DEFAULT string = "session_id"
+
+	AUTH_REDIRECT_OS   string = "AUTH_REDIRECT"
+	AUTH_REDIRECT_FLAG string = "authRedirect"
+	//AUTH_REDIRECT_DEFAULT string = "https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_a_href"
+	AUTH_REDIRECT_DEFAULT string = "http://localhost:3000/login"
 )
