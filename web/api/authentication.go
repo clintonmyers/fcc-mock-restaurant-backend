@@ -26,6 +26,9 @@ func setupOAuth(fiberApp *fiber.App, config *app.Configuration) {
 	fiberApp.Get("/auth/:provider/callback", loginCallback(config))
 }
 
+// For both regular and simulated login we need to get an app user based upon the OIDC user we get
+// So we'll need to lookup a user by their sub ID
+
 func loginCallback(config *app.Configuration) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		user, err := goth_fiber.CompleteUserAuth(ctx)
