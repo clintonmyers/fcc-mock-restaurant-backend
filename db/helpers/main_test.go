@@ -34,7 +34,8 @@ func CreateAndMigrateTempDB(dir string) (*os.File, *gorm.DB, error) {
 	db.AutoMigrate(&models.Testimonial{})
 	db.AutoMigrate(&models.TestimonialImage{})
 	db.AutoMigrate(&models.Restaurant{})
-	db.AutoMigrate(&models.Address{})
+	db.AutoMigrate(&models.UserAddress{})
+	db.AutoMigrate(&models.RestaurantAddress{})
 	db.AutoMigrate(&models.Company{})
 	db.AutoMigrate(&models.MenuImage{})
 	db.AutoMigrate(&models.Menu{})
@@ -70,7 +71,7 @@ func TestMainRepository_GetUserById(t *testing.T) {
 				Role: "role1",
 			},
 		},
-		Addresses: []models.Address{},
+		Addresses: []models.UserAddress{},
 	}
 
 	count, err := mainRepo.SaveUser(&user)
@@ -126,7 +127,7 @@ func TestMainRepository_GetAllUsers(t *testing.T) {
 				Role: "role1",
 			},
 		},
-		Addresses: []models.Address{},
+		Addresses: []models.UserAddress{},
 	}
 
 	count, err := mainRepo.SaveUser(&user)
@@ -187,7 +188,7 @@ func TestMainRepository_GetUserByUsername(t *testing.T) {
 				Role: "role1",
 			},
 		},
-		Addresses: []models.Address{},
+		Addresses: []models.UserAddress{},
 	}
 
 	count, err := mainRepo.SaveUser(&user)
@@ -240,7 +241,7 @@ func TestMainRepository_SaveUser(t *testing.T) {
 				Role: "role1",
 			},
 		},
-		Addresses: []models.Address{},
+		Addresses: []models.UserAddress{},
 	}
 
 	count, err := mainRepo.SaveUser(&user)
