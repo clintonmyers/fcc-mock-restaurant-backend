@@ -52,8 +52,7 @@ func loginCallback(config *app.Configuration) fiber.Handler {
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 		if t, err := token.SignedString([]byte(config.OAuthSecret)); err == nil {
-			return ctx.JSON(t)
-			//return ctx.Redirect(config.AuthRedirect+"?jwt="+t, fiber.StatusTemporaryRedirect)
+			return ctx.Redirect(config.AuthRedirect+"?jwt="+t, fiber.StatusTemporaryRedirect)
 		} else {
 			fmt.Println(err)
 		}
