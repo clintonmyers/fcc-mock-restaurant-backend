@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/clintonmyers/fcc-mock-restaurant-backend/app"
+	"github.com/clintonmyers/fcc-mock-restaurant-backend/models"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"
@@ -11,19 +12,20 @@ import (
 )
 
 func setupOAuth(fiberApp *fiber.App, config *app.Configuration) {
+
+	fiberApp.Get("/login/:provider", goth_fiber.BeginAuthHandler)
+	fiberApp.Get("/auth/:provider/callback", loginCallback(config))
+
 	if config.SimulateOAuth {
 		fiberApp.Post("/login", simulatedLogin(config))
+
 	} else {
 		fiberApp.Get("/login", func(c *fiber.Ctx) error {
-			// This is needed by the goth_fiber and the underlying goth oauth packages to determine what provider to use
 			c.Set("provider", "google")
 			return c.Redirect("/login/google", fiber.StatusTemporaryRedirect)
 		})
 	}
 
-	fiberApp.Get("/login/:provider", goth_fiber.BeginAuthHandler)
-
-	fiberApp.Get("/auth/:provider/callback", loginCallback(config))
 }
 
 // For both regular and simulated login we need to get an app user based upon the OIDC user we get
@@ -43,10 +45,43 @@ func loginCallback(config *app.Configuration) fiber.Handler {
 		} else {
 			fmt.Println(err)
 		}
+		var repoUser models.User
+		Repo.GetUserBySubId(&repoUser, user.UserID)
+		if repoUser.ID == 0 {
+			// TODO
+			// We still need to work to setup the different restaurants based upon the requesting site
 
+			roles := make([]models.UserRole, 0, 1)
+			roles = append(roles, models.UserRole{
+				Role:         "guest",
+				RestaurantID: 1,
+			})
+
+			models.UserFromGormUser(&repoUser, &user)
+			repoUser.UserRole = []models.UserRole{
+				models.UserRole{
+					Role:         "user",
+					RestaurantID: 1,
+				},
+			}
+			count, err := Repo.SaveUser(&repoUser)
+			if count != 1 {
+				fmt.Println("Hmmm didn't save properly.. expected 1 got: ", count, "\t", user)
+			}
+			if err != nil {
+				fmt.Println("ERROR: ", err, "\t", user)
+			}
+		}
+		isAdmin := false
+		for _, role := range repoUser.UserRole {
+			if role.Role == "admin" {
+				isAdmin = true
+			}
+		}
 		claims := jwt.MapClaims{
-			"name":  "John Doe",
-			"admin": true,
+			"name":  repoUser.Username,
+			"admin": isAdmin,
+			"roles": repoUser.UserRole,
 			"exp":   time.Now().Add(time.Hour * 72).Unix(),
 		}
 
@@ -89,6 +124,32 @@ func simulatedLogin(config *app.Configuration) fiber.Handler {
 	}
 }
 
+func jwtAuth(config *app.Configuration) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		m := c.Method()
+		// Only allow idempotent methods without access token
+		if m == fiber.MethodGet || m == fiber.MethodHead || m == fiber.MethodConnect || m == fiber.MethodOptions {
+			return c.Next()
+		}
+		user := c.Locals("user").(*jwt.Token)
+		if !user.Valid {
+			fmt.Println("Invalid user, returning 404")
+			return c.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
+
+		}
+		claims := user.Claims.(jwt.MapClaims)
+		name := claims["name"].(string)
+		fmt.Println("found user: ", name)
+		isAdmin := claims["admin"].(bool)
+		if isAdmin {
+			return c.Next()
+		}
+		//return c.SendString("Welcome " + name)
+
+		return c.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
+	}
+}
+
 func apiKeyAuth(config *app.Configuration) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 
@@ -115,7 +176,11 @@ func apiKeyAuth(config *app.Configuration) fiber.Handler {
 func getJwtFunction(config *app.Configuration) fiber.Handler {
 	return jwtware.New(jwtware.Config{
 		SigningKey: []byte(config.OAuthSecret),
-		Filter:     httpMethodBasedFilter,
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			fmt.Println("jwt error handler called, returning 404 to user")
+			return c.SendStatus(fiber.StatusNotFound)
+		},
+		Filter: httpMethodBasedFilter,
 	})
 }
 

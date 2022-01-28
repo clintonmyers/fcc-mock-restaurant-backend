@@ -10,6 +10,7 @@ type UserRepository interface {
 	SaveUser(*models.User) (int64, error)
 	GetUserById(*models.User, uint) error
 	GetUserByUsername(*models.User, string) error
+	GetUserBySubId(*models.User, string) error
 	GetAllUsers(*[]models.User) error
 }
 
@@ -30,6 +31,14 @@ func (m *MainRepository) GetUserByUsername(user *models.User, s string) error {
 		return errors.New("invalid username")
 	}
 	m.DB.Preload(clause.Associations).Where("username = ?", s).First(user)
+	return m.DB.Error
+}
+
+func (m *MainRepository) GetUserBySubId(user *models.User, id string) error {
+	if len(id) == 0 {
+		return errors.New("invalid subscriber id")
+	} // SubId
+	m.DB.Preload(clause.Associations).Where("sub_id = ?", id).First(user)
 	return m.DB.Error
 }
 

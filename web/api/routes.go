@@ -43,7 +43,8 @@ func SetupRoutes(fiberApp *fiber.App, config *app.Configuration) {
 	api := fiberApp.Group("/api", getJwtFunction(config))
 
 	{
-		api = api.Group("/current", apiKeyAuth(config))
+		//api = api.Group("/current", apiKeyAuth(config))
+		api = api.Group("/current", jwtAuth(config))
 		api.Get("/hello/:name", sayHello)
 
 		companyGrouping(api, config)
@@ -57,6 +58,8 @@ func companyGrouping(api fiber.Router, config *app.Configuration) {
 }
 
 func restaurantGrouping(group fiber.Router, config *app.Configuration) {
+	//SetRestaurantApiRepo(helpers.MainRepository{DB: config.DB})
+
 	api := group.Group("/restaurant")
 
 	api.Get("/:restaurantID/menu", getMenuByRestaurantId(config))

@@ -7,30 +7,58 @@ import (
 )
 
 type Configuration struct {
-	DB                  *gorm.DB
-	WebApp              *fiber.App
-	Store               *session.Store
-	MaxIdle             int
-	MaxOpenConn         int
-	LifetimeMinutes     int
-	Production          bool
-	Port                string
-	LocalDB             string
-	DatabaseUrl         string
-	GenerateTestData    bool
-	ApiKey              string
-	AutoMigrate         bool
+	DB     *gorm.DB
+	WebApp *fiber.App
+	Store  *session.Store
+
+	/*
+		DATABASE CONFIGURATION
+	*/
+	MaxIdle     int
+	MaxOpenConn int
+	LocalDB     string
+	DatabaseUrl string
+	AutoMigrate bool
+
+	LifetimeMinutes int
+	// Web server, this app, port
+	Port string
+
+	// Will choose whether to connect to remote or test database
+	Production bool
+	// Should we generate Test Data?
+	GenerateTestData bool
+	// Will only happen if production is false as well
 	DeleteLocalDatabase bool
-	GoogleOAuthKey      string
-	GoogleOAuthSecret   string
-	CallbackUrl         string
-	SimulateOAuth       bool
-	SimulatedUser       string
-	SimulatedPassword   string
-	OAuthSecret         string
-	SessionLocation     string
-	SessionName         string
-	AuthRedirect        string
+
+	/*
+		AUTHENTICATION
+	*/
+	// No longer used, but was an api key for authentication
+	ApiKey string
+
+	// Google authentication keys
+	GoogleOAuthKey    string
+	GoogleOAuthSecret string
+	// Where we ask the oauth provider to call us back at, this app
+	CallbackUrl string
+	// If true will accept a form with 'user' & 'pass' options being passed in
+	SimulateOAuth bool
+	// The username for simulated oauth user
+	SimulatedUser string
+	// the password for simulated oauth user
+	SimulatedPassword string
+	// The secret key that will be used to encrypt the jwt token
+	OAuthSecret string
+	// Where do we redirect a user after they have successfully authenticated
+	AuthRedirect string
+
+	/*
+		SESSION LOCATION, will still be used for authentication redirect cookie
+	*/
+	// Where do we store the session
+	SessionLocation string
+	SessionName     string
 }
 
 const (
@@ -45,7 +73,7 @@ const (
 
 	GENERATE_TEST_DATA_OS      string = "GENERATE_TEST_DATA"
 	GENERATE_TEST_DATA_FLAG    string = "generateTestData"
-	GENERATE_TEST_DATA_DEFAULT bool   = true
+	GENERATE_TEST_DATA_DEFAULT bool   = false
 
 	DATABASE_URL_OS      string = "DATABASE_URL"
 	DATABASE_URL_FLAG    string = "databaseUrl"
@@ -77,7 +105,7 @@ const (
 
 	PORT_OS      string = "PORT"
 	PORT_FLAG    string = "port"
-	PORT_DEFAULT string = ":3030"
+	PORT_DEFAULT string = ":8088"
 
 	GOOGLE_AUTH_KEY_OS   string = "GOOGLE_AUTH_KEY"
 	GOOGLE_AUTH_KEY_FLAG string = "googleAuthKey"
@@ -109,14 +137,13 @@ const (
 
 	SESSION_LOCATION_OS      string = "SESSION_LOCATION"
 	SESSION_LOCATION_FLAG    string = "sessionLocation"
-	SESSION_LOCATION_DEFAULT string = "header"
+	SESSION_LOCATION_DEFAULT string = "cookie"
 
 	SESSION_NAME_OS      string = "SESSION_NAME"
 	SESSION_NAME_FLAG    string = "sessionName"
 	SESSION_NAME_DEFAULT string = "session_id"
 
-	AUTH_REDIRECT_OS   string = "AUTH_REDIRECT"
-	AUTH_REDIRECT_FLAG string = "authRedirect"
-	//AUTH_REDIRECT_DEFAULT string = "https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_a_href"
+	AUTH_REDIRECT_OS      string = "AUTH_REDIRECT"
+	AUTH_REDIRECT_FLAG    string = "authRedirect"
 	AUTH_REDIRECT_DEFAULT string = "http://localhost:3000/login"
 )

@@ -44,6 +44,75 @@ func CreateAndMigrateTempDB(dir string) (*os.File, *gorm.DB, error) {
 
 	return file, db, err
 }
+func TestMainRepository_GetUserBySubscriberId(t *testing.T) {
+
+	tempDir := t.TempDir()
+	file, db, err := CreateAndMigrateTempDB(tempDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	var mainRepo UserRepository
+	mainRepo = &MainRepository{DB: db}
+
+	// -------------------------------- //
+	// -------------------------------- //
+	// -------------------------------- //
+
+	// Create a user
+	user := models.User{
+		Username:  "Username",
+		FirstName: "first",
+		LastName:  "last",
+		SubId:     "subscriber1",
+		UserRole: []models.UserRole{
+			{
+				Model:        gorm.Model{},
+				Role:         "admin",
+				RestaurantID: 1,
+			},
+		},
+		Addresses: []models.UserAddress{},
+	}
+
+	count, err := mainRepo.SaveUser(&user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatal("expected to affect one row with insert")
+	}
+
+	// -------------------------------- //
+	// -------------------------------- //
+	// -------------------------------- //
+
+	var ans models.User
+	err = mainRepo.GetUserBySubId(&ans, "subscriber1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	users := make([]models.User, 0)
+	mainRepo.GetAllUsers(&users)
+
+	for _, a := range users {
+		fmt.Println(a)
+	}
+
+	if ans.ID != 1 {
+		t.Fatal("expected ID to be returned to equal 1")
+	}
+	for _, role := range ans.UserRole {
+		if role.RestaurantID != 1 {
+			t.Fatal("invalid restaurant ID found")
+		}
+		if role.Role != "admin" {
+			t.Fatal("invalid user role found")
+		}
+	}
+}
 
 func TestMainRepository_GetUserById(t *testing.T) {
 
@@ -66,6 +135,7 @@ func TestMainRepository_GetUserById(t *testing.T) {
 		Username:  "Username",
 		FirstName: "first",
 		LastName:  "last",
+		SubId:     "abc",
 		UserRole: []models.UserRole{
 			{
 				Role: "role1",
@@ -122,9 +192,12 @@ func TestMainRepository_GetAllUsers(t *testing.T) {
 		Username:  "Username",
 		FirstName: "first",
 		LastName:  "last",
+		SubId:     "subscriber1",
 		UserRole: []models.UserRole{
 			{
-				Role: "role1",
+				Model:        gorm.Model{},
+				Role:         "role1",
+				RestaurantID: 1,
 			},
 		},
 		Addresses: []models.UserAddress{},

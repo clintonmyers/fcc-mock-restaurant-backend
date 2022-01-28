@@ -10,18 +10,23 @@ import (
 
 var globalConfig app.Configuration
 
+func FatalIfErr(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 
 	loadConfiguration(&globalConfig)
 
 	setDatabaseParameters(&globalConfig)
 	configureMiddleware(globalConfig.WebApp)
+
+	api.Repo = dbHelper.MainRepository{DB: globalConfig.DB}
 	api.SetupRoutes(globalConfig.WebApp, &globalConfig)
 
-	err := dbHelper.MigrateDB(&globalConfig)
-	if err != nil {
-		log.Fatal(err)
-	}
+	FatalIfErr(dbHelper.MigrateDB(&globalConfig))
 
 	if globalConfig.GenerateTestData {
 		fmt.Println("Loading Test Data")
@@ -40,8 +45,8 @@ func main() {
 	//	fmt.Println("Gracefully shutdown starting")
 	//	_ = globalConfig.WebApp.Shutdown()
 	//}()
-
-	log.Fatal(globalConfig.WebApp.Listen(globalConfig.Port))
+	
+	FatalIfErr(globalConfig.WebApp.Listen(globalConfig.Port))
 
 }
 

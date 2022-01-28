@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"github.com/markbates/goth"
+	"gorm.io/gorm"
+)
 
 type User struct {
 	gorm.Model
@@ -10,4 +13,11 @@ type User struct {
 	LastName  string        `json:"lastName"`
 	UserRole  []UserRole    `json:"userRole"gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Addresses []UserAddress `json:"addresses"gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+}
+
+func UserFromGormUser(u *User, g *goth.User) {
+	u.Username = g.Email
+	u.SubId = g.UserID
+	u.FirstName = g.FirstName
+	u.LastName = g.LastName
 }
