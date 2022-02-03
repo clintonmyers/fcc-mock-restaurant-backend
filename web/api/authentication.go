@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/markbates/goth"
 	"github.com/shareed2k/goth_fiber"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -75,7 +76,7 @@ func getSignedToken(repoUser *models.User, config *app.Configuration) (string, e
 	claims := jwt.MapClaims{
 		"name":  repoUser.Username,
 		"admin": isAdmin,
-		"roles": repoUser.UserRole,
+		"roles": repoUser.GetTruncatedUserRoles(),
 		"exp":   time.Now().Add(time.Hour * 72).Unix(),
 	}
 
@@ -108,12 +109,6 @@ func loginCallback(config *app.Configuration) fiber.Handler {
 		}
 		var repoUser models.User
 		populateRepoUser(&repoUser, &user)
-		//_ = Repo.GetUserBySubId(&repoUser, user.UserID)
-		//if repoUser.ID == 0 {
-		//	if err := setupNewUser(&repoUser, &user); err != nil {
-		//		return ctx.SendStatus(fiber.StatusInternalServerError)
-		//	}
-		//}
 
 		t, err := getSignedToken(&repoUser, config)
 		if err != nil {
@@ -134,22 +129,37 @@ func simulatedLogin(config *app.Configuration) fiber.Handler {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		}
 
-		// Create the Claims
-		claims := jwt.MapClaims{
-			"name":  config.SimulatedUser,
-			"admin": true,
-			"exp":   time.Now().Add(time.Hour * 72).Unix(),
+		repoUser := models.User{
+			Model: gorm.Model{
+				ID:        1,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			Username:  user,
+			SubId:     "ABCDEFG",
+			FirstName: "",
+			LastName:  "",
+			UserRole: []models.UserRole{
+				{
+					Model: gorm.Model{
+						ID:        1,
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+					},
+					Role:         "admin",
+					RestaurantID: 1,
+					UserId:       1,
+				},
+			},
+			Addresses: nil,
 		}
 
-		// Create token
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-		// Generate encoded token and send it as response.
-		if t, err := token.SignedString([]byte(config.OAuthSecret)); err != nil {
+		t, err := getSignedToken(&repoUser, config)
+		if err != nil {
 			return c.SendStatus(fiber.StatusInternalServerError)
-		} else {
-			return c.JSON(fiber.Map{"token": t})
 		}
+
+		return c.Redirect(config.AuthRedirect+"?jwt="+t, fiber.StatusTemporaryRedirect)
 	}
 }
 
@@ -173,7 +183,6 @@ func jwtAuth(config *app.Configuration) fiber.Handler {
 		if isAdmin {
 			return c.Next()
 		}
-		//return c.SendString("Welcome " + name)
 
 		return c.Status(fiber.StatusNotFound).SendString("Cannot Find Requested Page")
 	}
