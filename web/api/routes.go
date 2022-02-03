@@ -76,14 +76,3 @@ func restaurantGrouping(group fiber.Router, config *app.Configuration) {
 	api.Delete("/:restaurantID/menu/:menuID/menuItem/:itemID", deleteItemByIdAndMenuIdAndRestaurantId(config))
 
 }
-
-//
-//func menuItemGrouping(g fiber.Router, config *app.Configuration) {
-//	g.Get("MenuItems/:restaurantId", func(c *fiber.Ctx) error {
-//		if id, err := strconv.Atoi(c.Params("restaurantId", "0")); err == nil && id > 0 {
-//
-//			//config.DB.Find
-//		}
-//		return c.Status(fiber.StatusNotFound).SendString("Cannot find requested page")
-//	})
-//}
